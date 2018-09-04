@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.qingqingmr.qqmr.dao.RightRoleSupervisorMapper">
+    <resultMap id="BaseResultMap" type="com.qingqingmr.qqmr.domain.entity.RightRoleSupervisor">
+        <id column="id" property="id" jdbcType="BIGINT"/>
+        <result column="time" property="time" jdbcType="TIMESTAMP"/>
+        <result column="supervisor_id" property="supervisorId" jdbcType="BIGINT"/>
+        <result column="role_id" property="roleId" jdbcType="BIGINT"/>
+    </resultMap>
+    <sql id="Base_Column_List">
+    id, time, supervisor_id, role_id
+  </sql>
+
+    <!-- 通过id查询管理员角色 -->
+    <select id="getRightRoleSupervisorBySupervisorId" resultMap="BaseResultMap" parameterType="java.lang.Long">
+        select
+        <include refid="Base_Column_List"/>
+        from t_right_role_supervisor where supervisor_id = #{supervisorId}
+    </select>
+
+    <!--统计某种角色对应的人数-->
+    <select id="countRightRoleSupervisorByRoleId" resultType="java.lang.Integer">
+       SELECT count(1) FROM t_right_role_supervisor  where role_id = #{roleId}
+  </select>
+
+    <!-- 通过管理员id删除管理员角色 -->
+    <delete id="deleteRightRoleSupervisorById" parameterType="java.lang.Long">
+    delete from t_right_role_supervisor where supervisor_id = #{supervisorId}
+  </delete>
+
+    <!-- 添加管理员角色 -->
+    <insert id="saveRightRoleSupervisor">
+    insert into t_right_role_supervisor (time, supervisor_id, role_id)
+    values (now(), #{supervisorId}, #{roleId})
+  </insert>
+
+    <!--  修改管理员角色 -->
+    <update id="updateRightRoleSupervisorById">
+    update t_right_role_supervisor set role_id = #{roleId} where supervisor_id = #{supervisorId}
+  </update>
+
+</mapper>

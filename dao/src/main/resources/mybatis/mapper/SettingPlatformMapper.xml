@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.qingqingmr.qqmr.dao.SettingPlatformMapper" >
+
+	<!-- 通过key查询 -->
+	<select id="getSettingValueByKey" resultType="java.lang.String">
+		select _value from t_setting_platform where _key = #{key}
+	</select>
+
+	<!-- 修改 -->
+	<update id="updateSettingByKey" >
+		update t_setting_platform set _value = #{_value} where _key = #{_key}
+	</update>
+
+	<!-- 查询所有记录 -->
+	<select id="listAllSetting" resultType="java.util.Map">
+		select _key,_value from t_setting_platform
+	</select>
+
+</mapper>

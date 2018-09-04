@@ -1,0 +1,299 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.qingqingmr.qqmr.dao.UserMapper">
+    <resultMap id="BaseResultMap" type="com.qingqingmr.qqmr.domain.entity.User">
+        <id column="id" property="id" jdbcType="BIGINT"/>
+        <result column="time" property="time" jdbcType="TIMESTAMP"/>
+        <result column="name" property="name" jdbcType="VARCHAR"/>
+        <result column="mobile" property="mobile" jdbcType="CHAR"/>
+        <result column="password" property="password" jdbcType="VARCHAR"/>
+        <result column="pay_password" property="payPassword" jdbcType="VARCHAR"/>
+        <result column="sex" property="sex" jdbcType="TINYINT"/>
+        <result column="nick_name" property="nickName" jdbcType="VARCHAR"/>
+        <result column="photo" property="photo" jdbcType="VARCHAR"/>
+        <result column="role_type" property="roleType" jdbcType="TINYINT"/>
+        <result column="employee_id" property="employeeId" jdbcType="BIGINT"/>
+        <result column="login_time" property="loginTime" jdbcType="TIMESTAMP"/>
+        <result column="login_count" property="loginCount" jdbcType="INTEGER"/>
+        <result column="login_ip" property="loginIp" jdbcType="VARCHAR"/>
+        <result column="wx_open_id" property="wxOpenId" jdbcType="VARCHAR"/>
+    </resultMap>
+
+    <sql id="Base_Column_List">
+    id, time, name, mobile, password, pay_password, sex, nick_name, photo, role_type, 
+    employee_id, login_time, login_count, login_ip, wx_open_id
+  	</sql>
+
+    <!-- 根据id查询用户信息 -->
+    <select id="getUserById" resultMap="BaseResultMap" parameterType="java.lang.Long">
+        select
+        <include refid="Base_Column_List"/>
+        from t_user where id = #{id}
+    </select>
+
+    <!--根据员工id查询用户信息-->
+    <select id="getUserByEmployeeId" resultMap="BaseResultMap">
+        SELECT
+        <include refid="Base_Column_List"/>
+        FROM `t_user` WHERE employee_id = #{employeeId};
+    </select>
+
+    <!-- 根据id删除用户 -->
+    <delete id="deleteUserById" parameterType="java.lang.Long">
+    delete from t_user where id = #{id}
+  	</delete>
+
+    <!-- 添加用户 -->
+    <insert id="saveUser" parameterType="com.qingqingmr.qqmr.domain.bean.UserSaveVO" keyColumn="id" keyProperty="id"
+            useGeneratedKeys="true">
+		insert into t_user (id, time, name, mobile,password, sex, nick_name, photo, role_type, employee_id, wx_open_id)
+		values (#{id}, #{time}, #{name},#{mobile}, #{password},#{sex}, #{nickName}, #{photo}, #{roleType}, #{employeeId}, #{wxOpenId})
+	</insert>
+
+    <!-- 修改用户信息 -->
+    <update id="updateUserById">
+    	update t_user set nick_name = #{nickName}, photo = #{photo}, wx_open_id = #{wxOpenId} where id = #{id}
+  	</update>
+
+
+    <!-- 通过手机号查询用户信息 -->
+    <select id="getUserByMobile" resultMap="BaseResultMap" parameterType="java.lang.String">
+        select
+        <include refid="Base_Column_List"/>
+        from t_user where mobile = #{mobile}
+    </select>
+
+    <!--获取用户列表-->
+    <select id="listUser" resultType="com.qingqingmr.qqmr.domain.bean.UserVO"
+            parameterType="com.qingqingmr.qqmr.base.bo.UserSearchBO">
+        SELECT
+        u.id,
+        u.nick_name nickName,
+        u.mobile,
+        u.time,
+        if(ui.spread_id!='null' and ui.spread_id!='-1',ui.spread_id,'0') dirInviteId,
+        CASE
+        WHEN u2.role_type>2 THEN (SELECT e.reality_name FROM t_employee e WHERE u2.employee_id=e.id)
+        ELSE u2.nick_name
+        END as dirInviteName,
+        u2.mobile dirInviteMobile,
+        CASE u2.role_type
+        WHEN "1" THEN "顾客"
+        WHEN "2" THEN "会员"
+        WHEN "3" THEN "美容师"
+        WHEN "4" THEN "顾问"
+        END as dirInviteRole,
+        if(ui2.spread_id!='null' and ui2.spread_id!='-1',ui2.spread_id,'0') inDirInviteId,
+        CASE
+        WHEN u3.role_type>2 THEN (SELECT e.reality_name FROM t_employee e WHERE u3.employee_id=e.id)
+        ELSE u3.nick_name
+        END as inDirInviteName,
+        u3.mobile inDirInviteMobile,
+        CASE u3.role_type
+        WHEN "1" THEN "顾客"
+        WHEN "2" THEN "会员"
+        WHEN "3" THEN "美容师"
+        WHEN "4" THEN "顾问"
+        END as inDirInviteRole,
+        IF(mc.id!='null',mc.id,"0") cardId,
+        mc.is_active isActive
+        FROM
+        `t_user` u
+        LEFT JOIN t_user_info ui ON ui.user_id=u.id
+        LEFT JOIN t_user u2 ON u2.id=ui.spread_id
+        LEFT JOIN t_employee e ON u2.employee_id=e.id
+        LEFT JOIN t_user_info ui2 ON ui2.user_id=u2.id
+        LEFT JOIN t_user u3 ON ui2.spread_id=u3.id
+        LEFT JOIN t_employee e2 ON u3.employee_id=e.id
+        LEFT JOIN t_membership_card mc ON mc.user_id=u.id
+
+        <where>
+            <if test="roleType!=null and roleType!=''">
+                u.role_type = #{roleType}
+            </if>
+            <if test="type!=null and type!=''">
+                <if test="typeStr!=null and typeStr!='' and type==1">
+                    and u.id LIKE CONCAT('%',#{typeStr},'%')
+                </if>
+                <if test="typeStr!=null and typeStr!='' and type==2">
+                    and u.nick_name = #{typeStr}
+                </if>
+                <if test="typeStr!=null and typeStr!='' and type==3">
+                    and u.mobile LIKE CONCAT('%',#{typeStr},'%')
+                </if>
+                <if test="typeStr!=null and typeStr!='' and type==4">
+                    and (e.reality_name LIKE CONCAT('%',UNHEX(#{typeStr}),'%') or u2.nick_name = #{typeStr})
+                </if>
+                <if test="typeStr!=null and typeStr!='' and type==5">
+                    and u2.mobile LIKE CONCAT('%',#{typeStr},'%')
+                </if>
+                <if test="typeStr!=null and typeStr!='' and type==6">
+                    and (e2.reality_name LIKE CONCAT('%',UNHEX(#{typeStr}),'%') or u3.nick_name = #{typeStr})
+                </if>
+                <if test="typeStr!=null and typeStr!='' and type==7">
+                    and u3.mobile LIKE CONCAT('%',#{typeStr},'%')
+                </if>
+            </if>
+
+            <if test="dirInviteRole!=null and dirInviteRole!='' and dirInviteRole!=0">
+                and u2.role_type = #{dirInviteRole}
+            </if>
+            <if test="inDirInviteRole!=null and inDirInviteRole!='' and inDirInviteRole!=0">
+                and u3.role_type = #{inDirInviteRole}
+            </if>
+            <if test="timeBegin !='' and timeBegin != null">
+                and Date(u.time) &gt;= #{timeBegin}
+            </if>
+            <if test="timeEnd !='' and timeEnd != null">
+                and Date(u.time) &lt;= #{timeEnd}
+            </if>
+
+        </where>
+        order by u.time desc
+    </select>
+
+    <!--获取平台指定用户人数-->
+    <select id="countUser" resultType="java.lang.Long">
+        SELECT COUNT(id)
+        FROM `t_user`
+        <where>
+            role_type=#{type}
+            <if test="timeBegin !=null and timeBegin !=''">
+                and Date(time) &gt;= #{timeBegin}
+            </if>
+            <if test="timeEnd !=null and timeEnd != ''">
+                and Date(time) &lt;= #{timeEnd}
+            </if>
+        </where>
+    </select>
+
+    <!-- 通过手机号修改用户表里的角色 -->
+    <update id="updateUserRoleType">
+     update t_user
+     role_type = 2
+     where mobile = #{mobile}
+     </update>
+
+    <!-- 通过用户id修改用户表里的角色 -->
+    <update id="updateUserRoleTypeById">
+        update t_user set
+        role_type = #{roleType}
+        where id = #{id}
+    </update>
+
+    <!--选择性的根据userid更新用户信息-->
+    <update id="updateUserByIdSelective" parameterType="com.qingqingmr.qqmr.domain.entity.User">
+        update t_user
+        <set>
+            <if test="time != null">
+                time = #{time},
+            </if>
+            <if test="name != null">
+                name = #{name},
+            </if>
+            <if test="mobile != null">
+                mobile = #{mobile},
+            </if>
+            <if test="password != null">
+                password = #{password},
+            </if>
+            <if test="payPassword != null">
+                pay_password = #{payPassword},
+            </if>
+            <if test="sex != null">
+                sex = #{sex},
+            </if>
+            <if test="nickName != null">
+                nick_name = #{nickName},
+            </if>
+            <if test="photo != null">
+                photo = #{photo},
+            </if>
+            <if test="roleType != null">
+                role_type = #{roleType},
+            </if>
+            <if test="employeeId != null">
+                employee_id = #{employeeId},
+            </if>
+            <if test="loginTime != null">
+                login_time = #{loginTime},
+            </if>
+            <if test="loginCount != null">
+                login_count = #{loginCount},
+            </if>
+            <if test="loginIp != null">
+                login_ip = #{loginIp},
+            </if>
+            <if test="wxOpenId != null">
+                wx_open_id = #{wxOpenId},
+            </if>
+        </set>
+        where id = #{id}
+    </update>
+
+    <!-- 通过用户id修改昵称 -->
+    <update id="updateUserNickName">
+    update t_user
+    set nick_name = #{nickName}
+    where id = #{userId}
+   </update>
+
+    <!-- 通过用户id修改性别 -->
+    <update id="updateUserSex">
+     update t_user
+    set sex = #{sex}
+    where id = #{userId}
+   </update>
+
+    <!-- 通过用户id修改手机号 -->
+    <update id="updateUserMobile">
+     update t_user
+    set mobile = #{mobile}
+    where id = #{userId}
+  </update>
+
+    <!-- 通过用户id修改交易密码 -->
+    <update id="updateUserPayPassword">
+     update t_user
+    set pay_password = #{payPassword}
+    where id = #{userId}
+  </update>
+
+    <!-- 通过WxOpenId查询用户信息 -->
+    <select id="getUserByWxOpenId" resultMap="BaseResultMap" parameterType="java.lang.String">
+        select
+        <include refid="Base_Column_List"/>
+        from t_user where wx_open_id = #{wxOpenId}
+    </select>
+
+    <!--根据userid查询用户邀请信息-->
+    <select id="getUserinviteInfoByUserId" resultType="com.qingqingmr.qqmr.domain.bean.UserVO">
+        SELECT
+        if(ui.spread_id!='null' and ui.spread_id!='-1',ui.spread_id,'0') dirInviteId,
+        CASE u2.role_type
+        WHEN "1" THEN "顾客"
+        WHEN "2" THEN "会员"
+        WHEN "3" THEN "美容师"
+        WHEN "4" THEN "顾问"
+        END as dirInviteRole,
+        if(ui2.spread_id!='null' and ui2.spread_id!='-1',ui2.spread_id,'0') inDirInviteId,
+        CASE u3.role_type
+        WHEN "1" THEN "顾客"
+        WHEN "2" THEN "会员"
+        WHEN "3" THEN "美容师"
+        WHEN "4" THEN "顾问"
+        ELSE ''
+        END as inDirInviteRole,
+        IF(mc.id!='null',mc.id,"0") cardId
+        FROM
+        `t_user` u
+        LEFT JOIN t_user_info ui ON ui.user_id=u.id
+        LEFT JOIN t_user u2 ON u2.id=ui.spread_id
+        LEFT JOIN t_user_info ui2 ON ui2.user_id=u2.id
+        LEFT JOIN t_user u3 ON ui2.spread_id=u3.id
+        LEFT JOIN t_membership_card mc ON mc.user_id=u.id
+        WHERE
+          u.id=#{userId}
+        limit 1
+    </select>
+</mapper>

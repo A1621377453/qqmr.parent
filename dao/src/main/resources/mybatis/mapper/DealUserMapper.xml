@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.qingqingmr.qqmr.dao.DealUserMapper">
+
+    <resultMap id="BaseResultMap" type="com.qingqingmr.qqmr.domain.entity.DealUser">
+        <id column="id" property="id" jdbcType="BIGINT"/>
+        <result column="time" property="time" jdbcType="TIMESTAMP"/>
+        <result column="user_id" property="userId" jdbcType="BIGINT"/>
+        <result column="service_order_no" property="serviceOrderNo" jdbcType="VARCHAR"/>
+        <result column="deal_type" property="dealType" jdbcType="TINYINT"/>
+        <result column="operation_type" property="operationType" jdbcType="INTEGER"/>
+        <result column="amount" property="amount" jdbcType="DECIMAL"/>
+        <result column="remark" property="remark" jdbcType="VARCHAR"/>
+    </resultMap>
+
+    <sql id="Base_Column_List">
+    id, time, user_id, service_order_no, deal_type, operation_type, amount, remark
+  </sql>
+
+    <!--通过id查询交易记录-->
+    <select id="getDealUserById" resultMap="BaseResultMap" parameterType="java.lang.Long">
+        select
+        <include refid="Base_Column_List"/>
+        from t_deal_user
+        where id = #{id}
+    </select>
+
+    <!--通过id删除-->
+    <delete id="deleteDealUserById" parameterType="java.lang.Long">
+    delete from t_deal_user
+    where id = #{id}
+  </delete>
+
+    <!--保存交易记录-->
+    <insert id="saveDealUser" parameterType="com.qingqingmr.qqmr.domain.entity.DealUser" keyColumn="id" keyProperty="id"
+            useGeneratedKeys="true">
+    insert into t_deal_user ( time, user_id,
+      service_order_no, deal_type, operation_type, 
+      amount, remark)
+    values (now(), #{userId},
+      #{serviceOrderNo}, #{dealType}, #{operationType},
+      #{amount}, #{remark})
+  </insert>
+
+    <!--更新交易记录-->
+    <update id="updateDealUserById" parameterType="com.qingqingmr.qqmr.domain.entity.DealUser">
+    update t_deal_user
+    set time = #{time},
+      user_id = #{userId},
+      service_order_no = #{serviceOrderNo},
+      deal_type = #{dealType},
+      operation_type = #{operationType},
+      amount = #{amount},
+      remark = #{remark}
+    where id = #{id}
+  </update>
+
+    <!-- 查询交易列表 -->
+    <select id="listDealUserPage" resultMap="BaseResultMap" parameterType="java.lang.Long">
+        select
+        <include refid="Base_Column_List"/>
+        from t_deal_user
+        where user_id = #{userId}
+        order by time desc
+    </select>
+
+</mapper>

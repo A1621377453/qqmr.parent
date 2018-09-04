@@ -1,0 +1,204 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.qingqingmr.qqmr.dao.UserBonusMapper">
+    <resultMap id="BaseResultMap" type="com.qingqingmr.qqmr.domain.entity.UserBonus">
+        <id column="id" property="id" jdbcType="BIGINT"/>
+        <result column="time" property="time" jdbcType="TIMESTAMP"/>
+        <result column="user_id" property="userId" jdbcType="BIGINT"/>
+        <result column="service_order_no" property="serviceOrderNo" jdbcType="VARCHAR"/>
+        <result column="amount" property="amount" jdbcType="DECIMAL"/>
+        <result column="type" property="type" jdbcType="TINYINT"/>
+        <result column="relation_id" property="relationId" jdbcType="BIGINT"/>
+        <result column="invite_number" property="inviteNumber" jdbcType="INTEGER"/>
+        <result column="fee" property="fee" jdbcType="DECIMAL"/>
+        <result column="is_return" property="isReturn" jdbcType="BIT"/>
+        <result column="return_time" property="returnTime" jdbcType="TIMESTAMP"/>
+        <result column="remark" property="remark" jdbcType="VARCHAR"/>
+    </resultMap>
+
+    <sql id="Base_Column_List">
+      id, time, user_id, service_order_no, amount, type, relation_id, invite_number,fee,is_return,return_time,remark
+    </sql>
+
+    <!-- 通过id查询用户奖金信息 -->
+    <select id="getUserBonusById" resultMap="BaseResultMap" parameterType="java.lang.Long">
+        select
+        <include refid="Base_Column_List"/>
+        from t_user_bonus
+        where id = #{id}
+    </select>
+
+    <!--根据userId查询用户佣金总额-->
+    <select id="getUserAmountByUserId" resultType="java.lang.Double">
+      SELECT IFNULL(SUM(amount),0) FROM `t_user_bonus` WHERE user_id = #{userId};
+   </select>
+
+    <!--获取用户当月 直接/间接 佣金-->
+    <select id="getUserCurMonAmountByUserId" resultType="java.lang.Double">
+        SELECT
+        IFNULL(SUM(amount),0)
+        FROM `t_user_bonus`
+        <where>
+            user_id = #{userId}
+            <if test="role!=null and role ==4">
+                <if test="type!=null and type ==1">
+                    and type = 1
+                </if>
+                <if test="type!=null and type ==0">
+                    and type != 1
+                </if>
+            </if>
+            <if test="role!=null and role ==3">
+                <if test="type!=null and type ==3">
+                    and type = 3
+                </if>
+                <if test="type!=null and type ==0">
+                    and type != 3
+                </if>
+            </if>
+            <if test="role!=null and role ==2">
+                <if test="type!=null and type ==3">
+                    and type = 3
+                </if>
+                <if test="type!=null and type ==0">
+                    and type != 3
+                </if>
+            </if>
+        </where>
+          AND date_format(time,'%Y-%m')=date_format(now(),'%Y-%m')
+    </select>
+
+    <!-- 通过id删除用户奖金信息 -->
+    <delete id="deleteUserBonusById" parameterType="java.lang.Long">
+     delete from t_user_bonus
+    where id = #{id}
+    </delete>
+
+    <!-- 保存用户奖金信息 -->
+    <insert id="saveUserBonus" parameterType="com.qingqingmr.qqmr.domain.entity.UserBonus" useGeneratedKeys="true" keyProperty="id" keyColumn="id">
+    insert into t_user_bonus (id, time, user_id, 
+      service_order_no, amount, type, 
+      relation_id, invite_number, fee, is_return,return_time,remark
+      )
+    values (#{id}, #{time}, #{userId}, 
+      #{serviceOrderNo}, #{amount}, #{type}, 
+      #{relationId}, #{inviteNumber}, #{fee}, #{isReturn},#{returnTime},#{remark}
+      )
+    </insert>
+
+    <!-- 通过id更新用户奖金信息 -->
+    <update id="updateUserBonus" parameterType="com.qingqingmr.qqmr.domain.entity.UserBonus">
+    update t_user_bonus
+    set time = #{time},
+      user_id = #{userId},
+      service_order_no = #{serviceOrderNo},
+      amount = #{amount},
+      type = #{type},
+      relation_id = #{relationId},
+      invite_number = #{inviteNumber},
+      remark = #{remark}
+    where id = #{id}
+    </update>
+
+    <!--获取平台角色奖励-->
+    <select id="getRoleAmount" resultType="com.qingqingmr.qqmr.domain.bean.ResultVO">
+        SELECT
+        u.role_type type,SUM(ub.amount) amount
+        FROM
+        `t_user_bonus` ub
+        LEFT JOIN t_user u ON u.id=ub.user_id
+        <where>
+            <if test="timeBegin !=null and timeBegin !=''">
+                and Date(ub.time) &gt;= #{timeBegin}
+            </if>
+            <if test="timeEnd !=null and timeEnd != ''">
+                and Date(ub.time) &lt;= #{timeEnd}
+            </if>
+        </where>
+        GROUP BY u.role_type
+    </select>
+
+    <!-- 分页查询用户佣金明细 -->
+    <select id="listUserBonusPage" parameterType="java.lang.Long" resultMap="BaseResultMap">
+  	SELECT
+    time,amount,type
+    FROM t_user_bonus
+    WHERE user_id = #{userId}
+    ORDER BY time DESC
+    </select>
+
+    <!--获取平台佣金列表-->
+    <select id="listBonus" resultType="com.qingqingmr.qqmr.domain.bean.UserBonusVO"
+            parameterType="com.qingqingmr.qqmr.base.bo.UserBonusSearchBO">
+        SELECT
+        ub.service_order_no orderNo,
+        ub.user_id userId,
+        u.nick_name nickName,
+        CASE
+        WHEN u.role_type > 2 THEN (SELECT e.reality_name FROM t_employee e WHERE e.id=u.employee_id)
+        ELSE '--'
+        END as realityName,
+        u.mobile,
+        u.role_type roleType,
+        CASE u.role_type
+        WHEN '1' THEN '顾客'
+        WHEN '2' THEN '会员'
+        WHEN '3' THEN '美容师'
+        WHEN '4' THEN '顾问'
+        END as roleTypeStr,
+        ub.amount,
+        ub.type,
+        CASE ub.type
+        WHEN '1' THEN '直推奖'
+        WHEN '2' THEN '合作奖'
+        WHEN '3' THEN '一级奖'
+        WHEN '4' THEN '二级奖'
+        WHEN '5' THEN '人头奖'
+        WHEN '6' THEN '双人奖'
+        END as typeStr,
+        ub.time
+        FROM
+        `t_user_bonus` ub
+        LEFT JOIN t_user u ON u.id=ub.user_id
+        LEFT JOIN t_employee e ON e.id=u.employee_id
+        <where>
+            <if test="type!=null and type!=''">
+                <if test="typeStr!=null and typeStr!='' and type==1">
+                    and ub.service_order_no LIKE CONCAT('%',#{typeStr},'%')
+                </if>
+                <if test="typeStr!=null and typeStr!='' and type==2">
+                    and u.nick_name = #{typeStr}
+                </if>
+                <if test="typeStr!=null and typeStr!='' and type==3">
+                    and e.reality_name LIKE CONCAT('%',#{typeStr},'%')
+                </if>
+                <if test="typeStr!=null and typeStr!='' and type==4">
+                    and u.mobile LIKE CONCAT('%',#{typeStr},'%')
+                </if>
+            </if>
+            <if test="roleType!=null and roleType!=''and roleType!=0">
+                and u.role_type = #{roleType}
+            </if>
+            <if test="bonusType!=null and bonusType!=''and bonusType!=0">
+                and ub.type = #{bonusType}
+            </if>
+            <if test="timeBegin !=null and timeBegin !='' ">
+                and Date(ub.time) &gt;= #{timeBegin}
+            </if>
+            <if test="timeEnd !=null and timeEnd != ''">
+                and Date(ub.time) &lt;= #{timeEnd}
+            </if>
+        </where>
+        ORDER BY ub.time desc
+    </select>
+
+    <!--查询所有到期佣金-->
+    <select id="listReturnExpire" resultType="map">
+        SELECT user_id AS userId,IFNULL(SUM(amount-fee),0.00) AS amount FROM t_user_bonus WHERE is_return = 0 AND TO_DAYS(NOW())-TO_DAYS(time) >= #{period} GROUP BY user_id
+    </select>
+
+    <!--更新所有到期佣金标识和时间-->
+    <update id="updateReturnExpire">
+        UPDATE t_user_bonus SET is_return = 1, return_time = NOW() WHERE  is_return = 0 AND TO_DAYS(NOW())-TO_DAYS(time) >= #{period}
+    </update>
+</mapper>

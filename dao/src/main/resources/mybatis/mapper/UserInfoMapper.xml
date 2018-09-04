@@ -1,0 +1,247 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.qingqingmr.qqmr.dao.UserInfoMapper">
+    <resultMap id="BaseResultMap" type="com.qingqingmr.qqmr.domain.entity.UserInfo">
+        <id column="id" property="id" jdbcType="BIGINT"/>
+        <result column="time" property="time" jdbcType="TIMESTAMP"/>
+        <result column="user_id" property="userId" jdbcType="BIGINT"/>
+        <result column="mobile" property="mobile" jdbcType="CHAR"/>
+        <result column="store_id" property="storeId" jdbcType="BIGINT"/>
+        <result column="spread_id" property="spreadId" jdbcType="BIGINT"/>
+        <result column="spread_time" property="spreadTime" jdbcType="TIMESTAMP"/>
+        <result column="beautician_id" property="beauticianId" jdbcType="BIGINT"/>
+        <result column="adviser_id" property="adviserId" jdbcType="BIGINT"/>
+    </resultMap>
+    
+    <sql id="Base_Column_List">
+	    id, time, user_id as userId, mobile, store_id as storeId, spread_id as spreadId, spread_time as spreadIime,
+	     beautician_id as beauticianId, adviser_id as adviserId
+  	</sql>
+  	
+	<sql id="Base_Column_List_Original">
+	    id, time, user_id, mobile, store_id, spread_id, spread_time, beautician_id, adviser_id
+  	</sql>
+
+    <!--获取员工累计邀请会员数量-->
+    <select id="getUserSpreadsByUserId" resultType="java.lang.Integer">
+        SELECT
+            COUNT(ui.id)
+        FROM
+            `t_user_info` ui
+        LEFT JOIN t_user u ON u.id = ui.user_id
+        WHERE
+            ui.spread_id = #{spreadId}
+        AND u.role_type = #{type}
+  </select>
+
+    <!--获取用户本月邀请的会员/顾客-->
+    <select id="getUserCurMonSpreadsByUserId" resultType="java.lang.Integer">
+        SELECT
+        COUNT(ui.id)
+        FROM
+        `t_user_info` ui
+        LEFT JOIN t_user u ON u.id = ui.user_id
+        WHERE
+        ui.spread_id = #{spreadId}
+        <if test="type!=null and type ==1">
+            AND u.role_type = 1
+        </if>
+        <if test="type!=null and type ==2">
+            AND u.role_type = 2
+        </if>
+        AND DATE_FORMAT(ui.time,"%Y-%m")=DATE_FORMAT(NOW(),"%Y-%m")
+    </select>
+
+    <!--根据userid查询用户详细信息-->
+    <select id="getUserInfoByUserId" resultMap="BaseResultMap">
+        SELECT
+        <include refid="Base_Column_List_Original"/>
+        FROM `t_user_info` WHERE user_id =#{userId}
+    </select>
+
+    <!-- 通过id删除用户信息 -->
+    <delete id="deleteUserInfoById" parameterType="java.lang.Long">
+    delete from t_user_info
+    where id = #{id}
+  </delete>
+
+    <!-- 保存用户信息 -->
+    <insert id="saveUserInfo" parameterType="com.qingqingmr.qqmr.domain.entity.UserInfo" keyColumn="id" keyProperty="id"
+            useGeneratedKeys="true">
+    insert into t_user_info (id, time, user_id, 
+      mobile, store_id, spread_id, 
+      spread_time, beautician_id, adviser_id
+      )
+    values (#{id}, #{time}, #{userId}, 
+      #{mobile}, #{storeId}, #{spreadId},
+      #{spreadTime}, #{beauticianId}, #{adviserId}
+      )
+  </insert>
+
+    <!-- 通过id更新用户信息 -->
+    <update id="updateUserInfo" parameterType="com.qingqingmr.qqmr.domain.entity.UserInfo">
+    update t_user_info
+    set time = #{time},
+      user_id = #{userId},
+      mobile = #{mobile},
+      store_id = #{storeId},
+      spread_id = #{spreadId},
+      spread_time = #{spreadTime},
+      beautician_id = #{beauticianId},
+      adviser_id = #{adviserId}
+    where id = #{id}
+  </update>
+
+    <!--选择性的根据id更新用户详细信息-->
+    <update id="updateUserInfoByIdSelective" parameterType="com.qingqingmr.qqmr.domain.entity.UserInfo">
+        update t_user_info
+        <set>
+            <if test="time != null">
+                time = #{time},
+            </if>
+            <if test="userId != null">
+                user_id = #{userId},
+            </if>
+            <if test="mobile != null">
+                mobile = #{mobile},
+            </if>
+            <if test="storeId != null">
+                store_id = #{storeId},
+            </if>
+            <if test="spreadId != null">
+                spread_id = #{spreadId},
+            </if>
+            <if test="spreadTime != null">
+                spread_time = #{spreadTime},
+            </if>
+            <if test="beauticianId != null">
+                beautician_id = #{beauticianId},
+            </if>
+            <if test="adviserId != null">
+                adviser_id = #{adviserId},
+            </if>
+        </set>
+        where id = #{id}
+    </update>
+
+    <!-- 分页查询用户邀请的会员列表 -->
+    <select id="listInviteMemberPage" resultType="com.qingqingmr.qqmr.domain.bean.InviteMemberVO"
+            parameterType="java.util.Map">
+        SELECT tu.mobile,tu.nick_name nickName,tu.photo,ti.time,ti.user_id userId
+        FROM t_user_info AS ti
+        LEFT JOIN t_user AS tu ON tu.id=ti.user_id
+        WHERE ti.spread_id=#{userId}
+        <if test="type!=null and type ==1">
+            AND tu.role_type = 1
+        </if>
+        <if test="type!=null and type ==2">
+            AND tu.role_type = 2
+        </if>
+    </select>
+
+    <!--获取用户累计邀请会员数量-->
+    <select id="getUserInviteMember" resultType="java.lang.Integer">
+        SELECT
+            COUNT(ui.id)
+        FROM
+            `t_user_info` ui
+        LEFT JOIN t_user u ON u.id = ui.user_id
+        WHERE
+            ui.spread_id=#{userId}
+        AND u.role_type = #{type}
+  	</select>
+
+    <!--获取用户本月邀请的会员/顾客-->
+    <select id="getUserInviteMemberThisMon" resultType="java.lang.Integer">
+        SELECT
+        COUNT(ui.id)
+        FROM
+        `t_user_info` ui
+        LEFT JOIN t_user u ON u.id = ui.user_id
+        WHERE
+        ui.spread_id=#{userId}
+        <if test="type!=null">
+            AND u.role_type = #{type}
+        </if>
+        AND DATE_FORMAT(ui.time,"%Y-%m")=DATE_FORMAT(NOW(),"%Y-%m")
+    </select>
+
+    <!--根据门店id获取会员信息-->
+    <select id="listUserByStoreId" resultType="java.util.Map">
+        SELECT
+        u.id,ui.mobile,
+        IFNULL(u.nick_name,'') name,
+        u.sex,
+        IFNULL(u.photo,'') photo
+        FROM
+        `t_user_info` ui
+        LEFT JOIN t_user u ON ui.user_id=u.id
+        <where>
+            ui.store_id=#{storeId}  and u.role_type=2
+            <if test="key!=null and key!=''">
+                and (u.nick_name = #{key} or u.mobile LIKE CONCAT("%",UNHEX(#{key}),"%"))
+            </if>
+        </where>
+    </select>
+
+    <!--根据userId获取用户直接邀请人信息-->
+    <select id="getInviterInfo" resultType="com.qingqingmr.qqmr.domain.bean.InviteMemberVO">
+       SELECT
+            u.id userId,
+            u.mobile,
+            u.photo,
+            u.sex,
+            CASE u.sex
+            WHEN 1 THEN "男"
+            WHEN 2 THEN "女"
+            ELSE "未知"
+            END as sexStr,
+            u.role_type,
+            CASE u.role_type
+            WHEN 1 THEN "顾客"
+            WHEN 2 THEN "会员"
+            WHEN 3 THEN "美容师"
+            WHEN 4 THEN "顾问"
+            END as roleTypeStr,
+            CASE u.role_type
+            WHEN 3 THEN (SELECT e.reality_name FROM t_employee e WHERE e.id=u.id)
+            WHEN 4 THEN (SELECT e.reality_name FROM t_employee e WHERE e.id=u.id)
+            ELSE u.nick_name
+            END as nickName
+        FROM
+            t_user u
+        WHERE
+            u.id = (
+                SELECT
+                    ui.spread_id
+                FROM
+                    t_user_info ui
+                WHERE
+                    ui.user_id = #{userId}
+            )
+    </select>
+
+    <!--根据手机号获取用户信息-->
+    <select id="getUserInfoByMobile" resultType="com.qingqingmr.qqmr.domain.entity.UserInfo">
+        SELECT
+        <include refid="Base_Column_List"/>
+        FROM `t_user_info` WHERE mobile = #{mobile};
+    </select>
+
+    <!--根据邀请人id查询邀请人信息-->
+    <select id="listUserInfoBySpreadId" resultMap="BaseResultMap">
+        SELECT
+        <include refid="Base_Column_List_Original"/>
+        FROM
+            `t_user_info`
+        WHERE
+        spread_id = #{spreadId}
+    </select>
+
+    <!-- 通过用户id修改手机号 -->
+    <update id="updateUserMobile">
+     	update t_user_info
+    	set mobile = #{mobile}
+    	where user_id = #{userId}
+  </update>
+</mapper>

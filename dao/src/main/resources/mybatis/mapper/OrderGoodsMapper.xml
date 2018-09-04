@@ -1,0 +1,111 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.qingqingmr.qqmr.dao.OrderGoodsMapper">
+    <resultMap id="BaseResultMap" type="com.qingqingmr.qqmr.domain.entity.OrderGoods">
+        <id column="id" property="id" jdbcType="BIGINT"/>
+        <result column="time" property="time" jdbcType="TIMESTAMP"/>
+        <result column="goods_id" property="goodsId" jdbcType="BIGINT"/>
+        <result column="goods_price" property="goodsPrice" jdbcType="DECIMAL"/>
+        <result column="number" property="number" jdbcType="INTEGER"/>
+        <result column="validity_period" property="validityPeriod" jdbcType="DECIMAL"/>
+        <result column="validity_period_unit" property="validityPeriodUnit" jdbcType="TINYINT"/>
+        <result column="order_id" property="orderId" jdbcType="BIGINT"/>
+    </resultMap>
+
+    <sql id="Base_Column_List">
+      id, time, goods_id, goods_price, number, validity_period, validity_period_unit, order_id
+    </sql>
+
+     <!--根据id查询订单商品详情-->
+    <select id="getOrderGoodsById" resultMap="BaseResultMap" parameterType="java.lang.Long">
+        select
+        <include refid="Base_Column_List"/>
+        from t_order_goods
+        where id = #{id}
+    </select>
+
+    <!--根据id删除订单商品详情-->
+    <delete id="deleteOrderGoodsById" parameterType="java.lang.Long">
+        delete from t_order_goods
+        where id = #{id}
+    </delete>
+
+    <!--添加订单商品详情-->
+    <insert id="saveOrderGoods" parameterType="com.qingqingmr.qqmr.domain.entity.OrderGoods" keyColumn="id" keyProperty="id" useGeneratedKeys="true">
+        insert into t_order_goods (id, time, goods_id,
+          goods_price, number, validity_period,
+          validity_period_unit, order_id)
+        values (#{id}, #{time}, #{goodsId},
+          #{goodsPrice}, #{number}, #{validityPeriod},
+          #{validityPeriodUnit}, #{orderId})
+    </insert>
+
+    <!--根据id更新订单商品详情-->
+    <update id="updateOrderGoodsById" parameterType="com.qingqingmr.qqmr.domain.entity.OrderGoods">
+        update t_order_goods
+        set time = #{time},
+          goods_id = #{goodsId},
+          goods_price = #{goodsPrice},
+          number = #{number},
+          validity_period = #{validityPeriod},
+          validity_period_unit = #{validityPeriodUnit},
+          order_id = #{orderId}
+        where id = #{id}
+    </update>
+
+    <!--根据订单id查询订单相关商品信息列表-->
+    <select id="listOrderGoods" resultMap="BaseResultMap">
+        SELECT
+        <include refid="Base_Column_List"/>
+        FROM `t_order_goods`
+        WHERE order_id=#{orderId}
+    </select>
+  
+  <!--根据订单id查询订单详情-->
+    <select id="getOrderDetailVOByOrderId" resultType="com.qingqingmr.qqmr.domain.bean.OrderDetailVO" parameterType="Long">
+    	SELECT
+		tg. `name`as name,
+		tg.image as image,
+		tog.number as number,
+		tor .time as time,
+		tor .order_no as orderNo,
+		tor .amount,
+		tor .pay_time as payTime,
+		tor . `status`,
+		tor .pay_type as payType,
+		tor .cancel_time as cancelTime,
+		tor .is_pay_for as isPayFor,
+		tor .pay_for_id as payForId
+		FROM
+		t_order tor
+		LEFT JOIN t_order_goods tog on tog.order_id=tor.id
+		LEFT JOIN t_goods tg ON tg.id=tog.goods_id
+		WHERE order_id=#{orderId}
+    </select>
+
+    <!--获取平台购买会员卡总金额-->
+    <select id="getPurchaseMemberCardAmount" resultType="java.lang.Double">
+        SELECT
+            SUM(o.real_amount)
+        FROM
+            `t_order_goods` og
+        LEFT JOIN t_order o ON o.id = og.order_id
+        <where>
+            og.goods_id = (
+                SELECT
+                    g.id
+                FROM
+                    `t_goods` g
+                WHERE
+                    g.type = #{type}
+            )
+            AND o.`status` = #{dealStatus}
+            <if test="timeBegin !=null and timeBegin !=''">
+                and Date(og.time) &gt;= #{timeBegin}
+            </if>
+            <if test="timeEnd !=null and timeEnd != ''">
+                and Date(og.time) &lt;= #{timeEnd}
+            </if>
+        </where>
+    </select>
+</mapper>

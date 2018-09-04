@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.qingqingmr.qqmr.dao.RightModuleMapper" >
+  <resultMap id="BaseResultMap" type="com.qingqingmr.qqmr.domain.entity.RightModule" >
+    <id column="id" property="id" jdbcType="BIGINT" />
+    <result column="name" property="name" jdbcType="VARCHAR" />
+    <result column="description" property="description" jdbcType="VARCHAR" />
+  </resultMap>
+  <sql id="Base_Column_List" >
+    id, name, description
+  </sql>
+
+  <!--根据id查询系统模块-->
+  <select id="getRightModuleById" resultMap="BaseResultMap" parameterType="java.lang.Long" >
+    select 
+    <include refid="Base_Column_List" />
+    from t_right_module
+    where id = #{id}
+  </select>
+
+  <!--查询所有的模块-->
+  <select id="listAllModule" resultType="java.util.Map">
+    SELECT id as moduleId, name FROM t_right_module
+  </select>
+
+    <!--根据id删除权限模块-->
+  <delete id="deleteRightModuleById" parameterType="java.lang.Long" >
+    delete from t_right_module
+    where id = #{id}
+  </delete>
+
+  <!--添加系统模块-->
+  <insert id="saveRightModule" parameterType="com.qingqingmr.qqmr.domain.entity.RightModule" >
+    insert into t_right_module (id, name, description
+      )
+    values (#{id}, #{name}, #{description}
+      )
+  </insert>
+
+  <!--更新系统模块-->
+  <update id="updateRightModuleById" parameterType="com.qingqingmr.qqmr.domain.entity.RightModule" >
+    update t_right_module
+    set name = #{name},
+      description = #{description}
+    where id = #{id}
+  </update>
+</mapper>

@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.qingqingmr.qqmr.dao.GoodsMapper" >
+  <resultMap id="BaseResultMap" type="com.qingqingmr.qqmr.domain.entity.Goods" >
+    <id column="id" property="id" jdbcType="BIGINT" />
+    <result column="time" property="time" jdbcType="TIMESTAMP" />
+    <result column="name" property="name" jdbcType="VARCHAR" />
+    <result column="type" property="type" jdbcType="TINYINT" />
+    <result column="image" property="image" jdbcType="VARCHAR" />
+    <result column="price" property="price" jdbcType="DECIMAL" />
+    <result column="validity_period" property="validityPeriod" jdbcType="DECIMAL" />
+    <result column="validity_period_unit" property="validityPeriodUnit" jdbcType="TINYINT" />
+    <result column="service" property="service" jdbcType="VARCHAR" />
+    <result column="service_count" property="serviceCount" jdbcType="INTEGER" />
+    <result column="service_form" property="serviceForm" jdbcType="TINYINT" />
+  </resultMap>
+  <resultMap id="ResultMapWithBLOBs" type="com.qingqingmr.qqmr.domain.entity.Goods" extends="BaseResultMap" >
+    <result column="content" property="content" jdbcType="LONGVARCHAR" />
+  </resultMap>
+  <sql id="Base_Column_List" >
+    id, time, name, type, image, price, validity_period, validity_period_unit, service, 
+    service_count, service_form
+  </sql>
+  <sql id="Blob_Column_List" >
+    content
+  </sql>
+
+  <!--通过id查询商品-->
+  <select id="getGoodsById" resultMap="ResultMapWithBLOBs" parameterType="java.lang.Long" >
+    select 
+    <include refid="Base_Column_List" />
+    ,
+    <include refid="Blob_Column_List" />
+    from t_goods
+    where id = #{id}
+  </select>
+
+  <!--通过id删除商品-->
+  <delete id="deleteGoodsById" parameterType="java.lang.Long" >
+    delete from t_goods
+    where id = #{id}
+  </delete>
+
+  <!--保存商品-->
+  <insert id="saveGoods" parameterType="com.qingqingmr.qqmr.domain.entity.Goods" >
+    insert into t_goods (id, time, name, 
+      type, image, price, 
+      validity_period, validity_period_unit, service, 
+      service_count, service_form, content
+      )
+    values (#{id}, #{time}, #{name},
+      #{type}, #{image}, #{price},
+      #{validityPeriod}, #{validityPeriodUnit}, #{service},
+      #{serviceCount}, #{serviceForm}, #{content}
+      )
+  </insert>
+
+ <!--更新商品-->
+  <update id="updateGoodsById" parameterType="com.qingqingmr.qqmr.domain.entity.Goods" >
+    update t_goods
+    set time = #{time},
+      name = #{name},
+      type = #{type},
+      image = #{image},
+      price = #{price},
+      validity_period = #{validityPeriod},
+      validity_period_unit = #{validityPeriodUnit},
+      service = #{service},
+      service_count = #{serviceCount},
+      service_form = #{serviceForm},
+      content = #{content}
+    where id = #{id}
+  </update>
+  
+   <!-- 查询会员卡信息 -->
+  <select id="getGoodsInfo" resultMap="ResultMapWithBLOBs" parameterType="java.lang.Long" >
+    select 
+    	id,name, type, image, price,content,service,service_count, service_form
+    from t_goods
+    where type = 1
+  </select>
+</mapper>

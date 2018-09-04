@@ -1,0 +1,140 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.qingqingmr.qqmr.dao.PlatformFeeMapper" >
+    
+  <resultMap id="BaseResultMap" type="com.qingqingmr.qqmr.domain.entity.PlatformFee" >
+    <id column="id" property="id" jdbcType="BIGINT" />
+    <result column="time" property="time" jdbcType="TIMESTAMP" />
+    <result column="user_id" property="userId" jdbcType="BIGINT" />
+    <result column="service_order_no" property="serviceOrderNo" jdbcType="VARCHAR" />
+    <result column="amount" property="amount" jdbcType="DECIMAL" />
+    <result column="type" property="type" jdbcType="TINYINT" />
+    <result column="relation_id" property="relationId" jdbcType="BIGINT" />
+    <result column="remark" property="remark" jdbcType="VARCHAR" />
+  </resultMap>
+
+  <sql id="Base_Column_List" >
+    id, time, user_id, service_order_no, amount, type, relation_id, remark
+  </sql>
+
+  <!--根据id查询平台管理费-->
+  <select id="getPlatformFeeById" resultMap="BaseResultMap" parameterType="java.lang.Long" >
+    select 
+    <include refid="Base_Column_List" />
+    from t_platform_fee
+    where id = #{id}
+  </select>
+
+  <!--获取平台费用-->
+  <select id="getPlatformFee" resultType="com.qingqingmr.qqmr.domain.bean.ResultVO">
+    SELECT type,SUM(amount) amount
+    FROM `t_platform_fee`
+    <where>
+      <if test="timeBegin !=null and timeBegin !=''">
+        and Date(time) &gt;= #{timeBegin}
+      </if>
+      <if test="timeEnd !=null and timeEnd != ''">
+        and Date(time) &lt;= #{timeEnd}
+      </if>
+    </where>
+      GROUP BY type
+  </select>
+
+  <!--获取收取费用列表-->
+  <select id="listPlatformFee" resultType="com.qingqingmr.qqmr.domain.bean.PlatformFeeVO" parameterType="com.qingqingmr.qqmr.base.bo.FeeSearchBO">
+      SELECT
+      pf.service_order_no orderNo,
+      pf.user_id userId,
+      u.nick_name nickName,
+      CASE
+      WHEN u.role_type >2 THEN (SELECT e.reality_name FROM t_employee e WHERE e.id = u.employee_id)
+      ELSE '--'
+      END as realityName,
+      u.sex,
+      CASE u.sex
+      WHEN '1' THEN '男'
+      WHEN '2' THEN '女'
+      ELSE '未知'
+      END as sexStr,
+      u.mobile,
+      u.role_type roleType,
+      CASE u.role_type
+      WHEN '1' THEN '顾客'
+      WHEN '2' THEN '会员'
+      WHEN '3' THEN '美容师'
+      WHEN '4' THEN '顾问'
+      END as roleTypeStr,
+      pf.amount,
+      pf.type,
+      CASE pf.type
+      WHEN '1' THEN '佣金管理费'
+      WHEN '2' THEN '提现'
+      END as typeStr,
+      pf.time
+      FROM
+      t_platform_fee pf
+      LEFT JOIN t_user u ON u.id=pf.user_id
+      LEFT JOIN t_employee e ON e.id=u.employee_id
+      <where>
+          <if test="type!=null and type!=''">
+              <if test="typeStr!=null and typeStr!='' and type==1">
+                  and pf.service_order_no LIKE CONCAT('%',#{typeStr},'%')
+              </if>
+              <if test="typeStr!=null and typeStr!='' and type==2">
+                  and u.nick_name = #{typeStr}
+              </if>
+              <if test="typeStr!=null and typeStr!='' and type==3">
+                  and e.reality_name LIKE CONCAT('%',#{typeStr},'%')
+              </if>
+              <if test="typeStr!=null and typeStr!='' and type==4">
+                  and u.mobile LIKE CONCAT('%',#{typeStr},'%')
+              </if>
+          </if>
+          <if test="sex!=null and sex!=''and sex!=0">
+              and u.sex = #{sex}
+          </if>
+          <if test="roleType!=null and roleType!=''and roleType!=0">
+              and u.role_type = #{roleType}
+          </if>
+          <if test="feeType!=null and feeType!=''and feeType!=0">
+              and pf.type = #{feeType}
+          </if>
+          <if test="dealDateBegin !='' and dealDateBegin != null">
+              and Date(pf.time) &gt;= #{dealDateBegin}
+          </if>
+          <if test="dealDateEnd !='' and dealDateEnd != null">
+              and Date(pf.time) &lt;= #{dealDateEnd}
+          </if>
+      </where>
+      ORDER BY pf.time desc
+  </select>
+
+    <!--根据id删除平台管理费-->
+  <delete id="deletePlatformFeeById" parameterType="java.lang.Long" >
+    delete from t_platform_fee
+    where id = #{id}
+  </delete>
+
+  <!--添加平台管理费-->
+  <insert id="savePlatformFee" parameterType="com.qingqingmr.qqmr.domain.entity.PlatformFee" >
+    insert into t_platform_fee (id, time, user_id,
+      service_order_no, amount, type, 
+      relation_id, remark)
+    values (#{id}, #{time}, #{userId},
+      #{serviceOrderNo}, #{amount}, #{type},
+      #{relationId}, #{remark})
+  </insert>
+
+  <!--更新平台管理费-->
+  <update id="updatePlatformFeeById" parameterType="com.qingqingmr.qqmr.domain.entity.PlatformFee" >
+    update t_platform_fee
+    set time = #{time},
+      user_id = #{userId},
+      service_order_no = #{serviceOrderNo},
+      amount = #{amount},
+      type = #{type},
+      relation_id = #{relationId},
+      remark = #{remark}
+    where id = #{id}
+  </update>
+</mapper>

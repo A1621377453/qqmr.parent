@@ -1,0 +1,122 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.qingqingmr.qqmr.dao.PaymentRequestMapper">
+
+    <resultMap type="com.qingqingmr.qqmr.domain.entity.PaymentRequest" id="BaseResultMap">
+        <id column="id" property="id"/>
+        <result column="time" property="time"/>
+        <result column="user_id" property="userId"/>
+        <result column="bizz_order_no" property="bizzOrderNo"/>
+        <result column="bizz_type" property="bizzType"/>
+        <result column="order_no" property="orderNo"/>
+        <result column="pay_type" property="payType"/>
+        <result column="status" property="status"/>
+        <result column="completed_time" property="completedTime"/>
+        <result column="ayns_url" property="aynsUrl"/>
+        <result column="req_params" property="reqParams"/>
+    </resultMap>
+
+    <sql id="Base_Column_List">
+		id,time,user_id,bizz_order_no,bizz_type,order_no,pay_type,status,completed_time,
+		ayns_url,req_params
+	</sql>
+
+    <!-- 添加 -->
+    <insert id="savePaymentRequestSelective"
+            keyColumn="id" useGeneratedKeys="true" keyProperty="id">
+        insert into t_payment_request
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            <if test="time != null">
+                time,
+            </if>
+            <if test="userId != null">
+                user_id,
+            </if>
+            <if test="bizzOrderNo != null">
+                bizz_order_no,
+            </if>
+            <if test="bizzType != null">
+                bizz_type,
+            </if>
+            <if test="orderNo != null">
+                order_no,
+            </if>
+            <if test="payType != null">
+                pay_type,
+            </if>
+            <if test="status != null">
+                status,
+            </if>
+            <if test="completedTime != null">
+                completed_time,
+            </if>
+            <if test="aynsUrl != null">
+                ayns_url,
+            </if>
+            <if test="reqParams != null">
+                req_params,
+            </if>
+        </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+            <if test="time != null">
+                #{time},
+            </if>
+            <if test="userId != null">
+                #{userId},
+            </if>
+            <if test="bizzOrderNo != null">
+                #{bizzOrderNo},
+            </if>
+            <if test="bizzType != null">
+                #{bizzType},
+            </if>
+            <if test="orderNo != null">
+                #{orderNo},
+            </if>
+            <if test="payType != null">
+                #{payType},
+            </if>
+            <if test="status != null">
+                #{status},
+            </if>
+            <if test="completedTime != null">
+                #{completedTime},
+            </if>
+            <if test="aynsUrl != null">
+                #{aynsUrl},
+            </if>
+            <if test="reqParams != null">
+                #{reqParams},
+            </if>
+        </trim>
+    </insert>
+
+    <!-- 根据第三方交易流水号查询请求日志 -->
+    <select id="getPaymentRequestByOrderNo" resultMap="BaseResultMap">
+        select
+        <include refid="Base_Column_List"/>
+        from t_payment_request
+        where order_no = #{orderNo}
+    </select>
+
+    <!--更新状态（status=0，1） -->
+    <update id="updateStatus">
+		update t_payment_request set status = #{status} where
+		id = #{id} and status
+		= -1
+	</update>
+
+    <!--更新完成时间 -->
+    <update id="updateCompletedTime">
+		update t_payment_request set completed_time =
+		#{completedTime} where id =
+		#{id} and status = 1
+	</update>
+
+    <!-- 根据业务订单号和业务类型查询支付请求 -->
+    <select id="getPaymentRequest" resultMap="BaseResultMap">
+        SELECT
+        <include refid="Base_Column_List"/>
+        FROM `t_payment_request` WHERE bizz_order_no=#{bizzOrderNo} AND bizz_type=#{bizzType}
+    </select>
+</mapper>

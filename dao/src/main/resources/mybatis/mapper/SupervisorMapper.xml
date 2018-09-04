@@ -1,0 +1,180 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.qingqingmr.qqmr.dao.SupervisorMapper">
+    <resultMap id="BaseResultMap" type="com.qingqingmr.qqmr.domain.entity.Supervisor">
+        <id column="id" property="id" jdbcType="BIGINT"/>
+        <result column="time" property="time" jdbcType="TIMESTAMP"/>
+        <result column="name" property="name" jdbcType="VARCHAR"/>
+        <result column="reality_name" property="realityName" jdbcType="VARCHAR"/>
+        <result column="mobile" property="mobile" jdbcType="VARCHAR"/>
+        <result column="password" property="password" jdbcType="VARCHAR"/>
+        <result column="lock_status" property="lockStatus" jdbcType="TINYINT"/>
+        <result column="login_count" property="loginCount" jdbcType="BIGINT"/>
+        <result column="last_login_time" property="lastLoginTime" jdbcType="TIMESTAMP"/>
+        <result column="last_login_ip" property="lastLoginIp" jdbcType="VARCHAR"/>
+        <result column="creater_id" property="createrId" jdbcType="BIGINT"/>
+        <result column="password_continue_fails" property="passwordContinueFails" jdbcType="INTEGER"/>
+        <result column="is_password_locked" property="isPasswordLocked" jdbcType="BIT"/>
+        <result column="password_locked_time" property="passwordLockedTime" jdbcType="TIMESTAMP"/>
+        <result column="remark" property="remark" jdbcType="VARCHAR"/>
+    </resultMap>
+    <sql id="Base_Column_List">
+        id, time, name, reality_name, mobile, password, lock_status, login_count, last_login_time,
+        last_login_ip, creater_id, password_continue_fails, is_password_locked, password_locked_time,
+        remark
+   </sql>
+
+    <!-- 定义查询列 -->
+    <sql id="Base_Column_List_Current">
+        t1.id, t1.name, t1.reality_name, t1.mobile, t1.lock_status,
+        t1.last_login_time, t1.last_login_ip, t1.remark, t2.role_id
+    </sql>
+
+    <!--  根据id进行查询 -->
+    <select id="getSupervisorById" resultMap="BaseResultMap" parameterType="java.lang.Long">
+        select
+        <include refid="Base_Column_List"/>
+        from t_supervisor where id = #{id}
+    </select>
+
+    <!-- 员工管理列表 -->
+    <select id="listSupervisorPage" resultType="com.qingqingmr.qqmr.domain.bean.SupervisorCurrentVO">
+        select
+        t1.id, t1.time, t1.name, t1.reality_name as realityName, t1.mobile,t1.lock_status as lockStatus,t2.role_id as roleId,t3.name as roleName
+        from t_supervisor t1
+        INNER JOIN t_right_role_supervisor t2 on t1.id = t2.supervisor_id
+        INNER JOIN t_right_role t3 on t3.id = t2.role_id
+        order by t1.time desc
+    </select>
+
+    <!-- 根据id删除管理员 -->
+    <delete id="deleteSupervisorById" parameterType="java.lang.Long">
+    delete from t_supervisor where id = #{id}
+  </delete>
+
+    <!--  添加管理员 -->
+    <insert id="saveSupervisor" parameterType="com.qingqingmr.qqmr.domain.entity.Supervisor" keyColumn="id"
+            keyProperty="id" useGeneratedKeys="true">
+    insert into t_supervisor ( time, name, reality_name, mobile, password,creater_id,remark,lock_status)
+    values (#{time}, #{name}, #{realityName}, #{mobile}, #{password}, #{createrId}, #{remark}, #{lockStatus})
+  </insert>
+
+    <!-- 修改管理员信息 -->
+    <update id="updateSupervisorById" parameterType="com.qingqingmr.qqmr.domain.entity.Supervisor">
+    update t_supervisor set
+      reality_name = #{realityName},
+      mobile = #{mobile},
+      password = #{password},
+      lock_status = #{lockStatus},
+      creater_id = #{createrId},
+      remark = #{remark}
+    where id = #{id}
+  </update>
+
+    <!--根据用户名查询管理员信息-->
+    <select id="getSupervisorByName" resultMap="BaseResultMap">
+        select
+        <include refid="Base_Column_List"/>
+        from t_supervisor where name=#{name}
+    </select>
+
+    <!--根据mobile查询管理员信息-->
+    <select id="getSupervisorByMobile" resultType="com.qingqingmr.qqmr.domain.entity.Supervisor">
+        select
+        <include refid="Base_Column_List"/>
+        from t_supervisor where mobile=#{mobile}
+    </select>
+
+    <!--查询当前登录员工的信息包含权限-->
+    <select id="getSupervisorCurrentById" resultMap="SupervisorCurrent">
+        select
+        <include refid="Base_Column_List_Current"/>
+        from t_supervisor t1
+        left JOIN t_right_role_supervisor t2
+        on t1.id = t2.supervisor_id
+        where t1.id =#{id}
+    </select>
+    <resultMap id="SupervisorCurrent" type="com.qingqingmr.qqmr.domain.bean.SupervisorCurrentVO">
+        <id column="id" property="id"/>
+        <result column="name" property="name"/>
+        <result column="reality_name" property="realityName"/>
+        <result column="mobile" property="mobile"/>
+        <result column="role_id" property="roleId"/>
+        <result column="lock_status" property="lockStatus"/>
+        <result column="last_login_time" property="lastLoginTime"/>
+        <result column="last_login_ip" property="lastLoginIp"/>
+        <result column="remark" property="remark"/>
+        <collection property="rightIds" column="role_id" ofType="Long" select="getRightByRoleId"/>
+    </resultMap>
+    <select id="getRightByRoleId" resultType="Long">
+        select right_id
+        from t_right_role_right where role_id = #{roleId}
+    </select>
+
+
+    <!--获取后台首页管理员信息-->
+    <select id="getSupervisorHomeInfo" resultType="com.qingqingmr.qqmr.domain.bean.SupervisorCurrentVO">
+        SELECT
+            s.id,
+            s.`name` name,
+            rr.`name` roleType,
+            s.last_login_time lastLoginTime,
+            s.last_login_ip lastLoginIp
+        FROM
+            `t_supervisor` s
+        LEFT JOIN t_right_role_supervisor rrs ON rrs.supervisor_id=s.id
+        LEFT JOIN t_right_role rr ON rr.id=rrs.role_id
+        WHERE
+            s.id = #{id}
+    </select>
+
+    <!--更新管理员信息-->
+    <update id="updateSupervisorByIdSelective" parameterType="com.qingqingmr.qqmr.domain.entity.Supervisor">
+        update t_supervisor
+        <set>
+            <if test="time != null">
+                time = #{time,jdbcType=TIMESTAMP},
+            </if>
+            <if test="name != null">
+                name = #{name,jdbcType=VARCHAR},
+            </if>
+            <if test="realityName != null">
+                reality_name = #{realityName,jdbcType=VARCHAR},
+            </if>
+            <if test="mobile != null">
+                mobile = #{mobile,jdbcType=VARCHAR},
+            </if>
+            <if test="password != null">
+                password = #{password,jdbcType=VARCHAR},
+            </if>
+            <if test="lockStatus != null">
+                lock_status = #{lockStatus,jdbcType=TINYINT},
+            </if>
+            <if test="loginCount != null">
+                login_count = #{loginCount,jdbcType=BIGINT},
+            </if>
+            <if test="lastLoginTime != null">
+                last_login_time = #{lastLoginTime,jdbcType=TIMESTAMP},
+            </if>
+            <if test="lastLoginIp != null">
+                last_login_ip = #{lastLoginIp,jdbcType=VARCHAR},
+            </if>
+            <if test="createrId != null">
+                creater_id = #{createrId,jdbcType=BIGINT},
+            </if>
+            <if test="passwordContinueFails != null">
+                password_continue_fails = #{passwordContinueFails,jdbcType=INTEGER},
+            </if>
+            <if test="isPasswordLocked != null">
+                is_password_locked = #{isPasswordLocked,jdbcType=BIT},
+            </if>
+            <if test="passwordLockedTime != null">
+                password_locked_time = #{passwordLockedTime,jdbcType=TIMESTAMP},
+            </if>
+            <if test="remark != null">
+                remark = #{remark,jdbcType=VARCHAR},
+            </if>
+        </set>
+        where id = #{id,jdbcType=BIGINT}
+    </update>
+</mapper>

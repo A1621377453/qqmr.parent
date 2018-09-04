@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.qingqingmr.qqmr.dao.StoreAreaMapper" >
+  <resultMap id="BaseResultMap" type="com.qingqingmr.qqmr.domain.entity.StoreArea" >
+    <id column="id" property="id" jdbcType="BIGINT" />
+    <result column="time" property="time" jdbcType="TIMESTAMP" />
+    <result column="name" property="name" jdbcType="VARCHAR" />
+  </resultMap>
+  <sql id="Base_Column_List" >
+    id, time, name
+  </sql>
+  
+  <!-- 通过id查询门店区域 -->
+  <select id="getStoreAreaById" resultMap="BaseResultMap" parameterType="java.lang.Long" >
+    select 
+    <include refid="Base_Column_List" />
+    from t_store_area where id = #{id}
+  </select>
+
+  <!--查询所有门店信息-->
+  <select id="listStoreAreas" resultType="com.qingqingmr.qqmr.domain.entity.StoreArea">
+    SELECT
+    <include refid="Base_Column_List"/>
+    FROM t_store_area
+  </select>
+
+  <!--通过区域名称查询大区信息-->
+  <select id="getStoreAreaByName" resultType="com.qingqingmr.qqmr.domain.entity.StoreArea">
+    select
+    <include refid="Base_Column_List" />
+    from t_store_area where name = #{name}
+  </select>
+
+  <!--根据门店id获取所属区域-->
+  <select id="getStoreAreaByStoreId" resultType="com.qingqingmr.qqmr.domain.entity.StoreArea">
+      SELECT sa.`name` FROM `t_store` s
+      LEFT JOIN t_store_area sa ON sa.id=s.area_id
+      WHERE
+      s.id=#{id}
+  </select>
+
+    <!--  通过id删除门店区域 -->
+  <delete id="deleteStoreAreaById" parameterType="java.lang.Long" >
+    delete from t_store_area where id = #{id}
+  </delete>
+  
+  <!-- 添加门店区域 -->
+  <insert id="saveStoreArea" keyColumn="id" keyProperty="id" useGeneratedKeys="true">
+    insert into t_store_area (time, name) values (now(), #{name})
+  </insert>
+  
+  <!-- 修改门店区域 -->
+  <update id="updateStoreAreaById" >
+    update t_store_area set time = now(), name = #{name} where id = #{id}
+  </update>
+  
+</mapper>

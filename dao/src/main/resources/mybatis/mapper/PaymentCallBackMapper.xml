@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.qingqingmr.qqmr.dao.PaymentCallBackMapper">
+
+    <resultMap type="com.qingqingmr.qqmr.domain.entity.PaymentCallBack"
+               id="BaseResultMap">
+        <id column="id" property="id"/>
+        <result column="time" property="time"/>
+        <result column="request_order_no" property="requestOrderNo"/>
+        <result column="cb_params" property="cbParams"/>
+        <result column="data_type" property="dataType"/>
+    </resultMap>
+
+    <sql id="Base_Column_List">
+		id,time,request_order_no,cb_params,data_type
+	</sql>
+
+    <!-- 添加 -->
+    <insert id="savePaymentCallBackSelective" parameterType="com.qingqingmr.qqmr.domain.entity.PaymentCallBack"
+            keyColumn="id" useGeneratedKeys="true" keyProperty="id">
+        insert into t_payment_call_back
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            <if test="time != null">
+                time,
+            </if>
+            <if test="requestOrderNo != null">
+                request_order_no,
+            </if>
+            <if test="cbParams != null">
+                cb_params,
+            </if>
+            <if test="dataType != null">
+                data_type,
+            </if>
+        </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+            <if test="time != null">
+                #{time},
+            </if>
+            <if test="requestOrderNo != null">
+                #{requestOrderNo},
+            </if>
+            <if test="cbParams != null">
+                #{cbParams},
+            </if>
+            <if test="dataType != null">
+                #{dataType},
+            </if>
+        </trim>
+    </insert>
+
+    <!-- 根据请求标识查询记录 -->
+    <select id="listPaymentCallBackByRequestOrderNo" resultMap="BaseResultMap">
+        select
+        <include refid="Base_Column_List"/>
+        from t_payment_call_back
+        where request_order_no = #{requestOrderNo}
+    </select>
+</mapper>

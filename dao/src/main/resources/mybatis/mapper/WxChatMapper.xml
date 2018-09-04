@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.qingqingmr.qqmr.dao.WxChatMapper" >
+  <resultMap id="BaseResultMap" type="com.qingqingmr.qqmr.domain.entity.WxChat" >
+    <id column="id" property="id" jdbcType="BIGINT" />
+    <result column="time" property="time" jdbcType="TIMESTAMP" />
+    <result column="open_id" property="openId" jdbcType="VARCHAR" />
+    <result column="nick_name" property="nickName" jdbcType="VARCHAR" />
+    <result column="image_url" property="imageUrl" jdbcType="VARCHAR" />
+    <result column="sex" property="sex" jdbcType="TINYINT" />
+  </resultMap>
+  <resultMap id="ResultMapWithBLOBs" type="com.qingqingmr.qqmr.domain.entity.WxChat" extends="BaseResultMap" >
+    <result column="wx_info" property="wxInfo" jdbcType="LONGVARCHAR" />
+  </resultMap>
+  <sql id="Base_Column_List" >
+    id, time, open_id, nick_name, image_url, sex
+  </sql>
+  <sql id="Blob_Column_List" >
+    wx_info
+  </sql>
+  
+  <!-- 通过id查询微信绑定表信息 -->
+  <select id="getWxChatById" resultMap="ResultMapWithBLOBs" parameterType="java.lang.Long" >
+    select 
+    <include refid="Base_Column_List" />
+    ,
+    <include refid="Blob_Column_List" />
+    from t_wx_chat
+    where id = #{id}
+  </select>
+  
+  <!-- 通过id删除微信绑定表信息  -->
+  <delete id="deleteWxChatById" parameterType="java.lang.Long" >
+    delete from t_wx_chat
+    where id = #{id}
+  </delete>
+  
+  <!-- 保存微信绑定表信息  -->
+  <insert id="saveWxChat" parameterType="com.qingqingmr.qqmr.domain.entity.WxChat" keyColumn="id" keyProperty="id" useGeneratedKeys="true">
+    insert into t_wx_chat (id, time, open_id,
+      nick_name, image_url, sex, 
+      wx_info)
+    values (#{id}, #{time}, #{openId}, 
+      #{nickName}, #{imageUrl}, #{sex}, 
+      #{wxInfo})
+  </insert>
+ 
+  <!-- 通过id更新微信绑定表信息  -->
+  <update id="updateWxChat" parameterType="com.qingqingmr.qqmr.domain.entity.WxChat" >
+    update t_wx_chat
+    set time = #{time},
+      open_id = #{openId},
+      nick_name = #{nickName},
+      image_url = #{imageUrl},
+      sex = #{sex},
+      wx_info = #{wxInfo}
+    where id = #{id}
+  </update>
+  
+   <!-- 通过微信openId修改昵称  -->
+  <update id="updateUserNickName">
+    update t_wx_chat
+    set nick_name = #{nickName}
+    where open_id = #{openId}
+  </update>
+  
+   <!-- 通过微信openId修改性别  -->
+  <update id="updateUserSex">
+    update t_wx_chat
+    set  sex = #{sex}
+    where open_id = #{openId}
+  </update>
+  
+   <!-- 通过id查询微信绑定表信息 -->
+  <select id="getWxChatByOpenId" resultMap="BaseResultMap">
+    select 
+    <include refid="Base_Column_List" />
+    from t_wx_chat
+    where open_id = #{openId}
+  </select>
+</mapper>

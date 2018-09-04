@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.qingqingmr.qqmr.dao.MembershipCardUseDetailMapper" >
+  <resultMap id="BaseResultMap" type="com.qingqingmr.qqmr.domain.entity.MembershipCardUseDetail" >
+    <id column="id" property="id" jdbcType="BIGINT" />
+    <result column="time" property="time" jdbcType="TIMESTAMP" />
+    <result column="card_id" property="cardId" jdbcType="BIGINT" />
+    <result column="user_id" property="userId" jdbcType="BIGINT" />
+    <result column="content" property="content" jdbcType="VARCHAR" />
+    <result column="remark" property="remark" jdbcType="VARCHAR" />
+  </resultMap>
+  <sql id="Base_Column_List" >
+    id, time, card_id, user_id, content, remark
+  </sql>
+
+  <!--通过id查询会员卡使用信息-->
+  <select id="getCardUseDetailById" resultMap="BaseResultMap" parameterType="java.lang.Long" >
+    select 
+    <include refid="Base_Column_List" />
+    from t_membership_card_use_detail
+    where id = #{id}
+  </select>
+
+  <!--根据卡id获取服务记录-->
+  <select id="listCardUse" resultMap="BaseResultMap">
+    SELECT
+    <include refid="Base_Column_List"/>
+    FROM `t_membership_card_use_detail` WHERE card_id = #{cardId}
+  </select>
+
+  <!--通过id删除会员卡使用信息-->
+  <delete id="deleteCardUseDetailById" parameterType="java.lang.Long" >
+    delete from t_membership_card_use_detail
+    where id = #{id}
+  </delete>
+
+  <!--保存会员卡使用信息-->
+  <insert id="saveCardUseDetail" parameterType="com.qingqingmr.qqmr.domain.entity.MembershipCardUseDetail"  keyColumn="id" keyProperty="id" useGeneratedKeys="true">
+    insert into t_membership_card_use_detail (id, time, card_id, 
+      user_id, content, remark
+      )
+    values (#{id}, #{time}, #{cardId},
+      #{userId}, #{content}, #{remark}
+      )
+  </insert>
+
+  <!--更新会员卡使用信息-->
+  <update id="updateCardUseDetailById" parameterType="com.qingqingmr.qqmr.domain.entity.MembershipCardUseDetail" >
+    update t_membership_card_use_detail
+    set time = #{time},
+      card_id = #{cardId},
+      user_id = #{userId},
+      content = #{content},
+      remark = #{remark}
+    where id = #{id}
+  </update>
+</mapper>

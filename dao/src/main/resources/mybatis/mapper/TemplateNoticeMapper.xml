@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.qingqingmr.qqmr.dao.TemplateNoticeMapper">
+
+	<resultMap id="BaseResultMap" type="com.qingqingmr.qqmr.domain.entity.TemplateNotice">
+		<id column="id" property="id" jdbcType="BIGINT" />
+		<result column="time" property="time" jdbcType="TIMESTAMP" />
+		<result column="type" property="type" jdbcType="TINYINT" />
+		<result column="scene" property="scene" jdbcType="TINYINT" />
+		<result column="title" property="title" jdbcType="VARCHAR" />
+	</resultMap>
+
+	<resultMap id="ResultMapWithBLOBs" type="com.qingqingmr.qqmr.domain.entity.TemplateNotice"
+		extends="BaseResultMap">
+		<result column="content" property="content" jdbcType="LONGVARCHAR" />
+	</resultMap>
+
+	<sql id="Base_Column_List">
+		id, time, type, scene, title
+	</sql>
+	
+	<sql id="Blob_Column_List">
+		content
+	</sql>
+
+	<!-- 查询 -->
+	<select id="getBySceneType" resultMap="ResultMapWithBLOBs">
+		select
+		<include refid="Base_Column_List" />
+		,
+		<include refid="Blob_Column_List" />
+		from t_template_notice
+		where scene = #{scene} and type = #{type}
+	</select>
+</mapper>

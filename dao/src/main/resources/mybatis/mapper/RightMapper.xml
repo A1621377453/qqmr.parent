@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.qingqingmr.qqmr.dao.RightMapper" >
+
+  <resultMap id="BaseResultMap" type="com.qingqingmr.qqmr.domain.entity.Right" >
+    <id column="id" property="id" jdbcType="BIGINT" />
+    <result column="name" property="name" jdbcType="VARCHAR" />
+    <result column="module_id" property="moduleId" jdbcType="BIGINT" />
+    <result column="description" property="description" jdbcType="VARCHAR" />
+  </resultMap>
+
+  <sql id="Base_Column_List" >
+    id, name, module_id, description
+  </sql>
+
+  <!--根据id查询权限-->
+  <select id="getRightById" resultMap="BaseResultMap" parameterType="java.lang.Long" >
+    select 
+    <include refid="Base_Column_List" />
+    from t_right
+    where id = #{id}
+  </select>
+
+  <!--根据moduleId查询对应的权限-->
+  <select id="getAllRightByModule" resultMap="BaseResultMap">
+    select
+    <include refid="Base_Column_List" />
+    from t_right
+    where module_id = #{moduleId}
+  </select>
+
+  <!--根据id删除权限-->
+  <delete id="deleteRightById" parameterType="java.lang.Long" >
+    delete from t_right
+    where id = #{id}
+  </delete>
+
+  <!--保存权限-->
+  <insert id="saveRight" parameterType="com.qingqingmr.qqmr.domain.entity.Right" >
+    insert into t_right (id, name, module_id, 
+      description)
+    values (#{id}, #{name}, #{moduleId},
+      #{description})
+  </insert>
+
+  <!--更新权限-->
+  <update id="updateRightById" parameterType="com.qingqingmr.qqmr.domain.entity.Right" >
+    update t_right
+    set name = #{name},
+      module_id = #{moduleId},
+      description = #{description}
+    where id = #{id}
+  </update>
+</mapper>

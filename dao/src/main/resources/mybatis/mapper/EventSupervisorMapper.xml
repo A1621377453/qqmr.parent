@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.qingqingmr.qqmr.dao.EventSupervisorMapper">
+    <resultMap id="BaseResultMap" type="com.qingqingmr.qqmr.domain.entity.EventSupervisor">
+        <id column="id" property="id" jdbcType="BIGINT"/>
+        <result column="time" property="time" jdbcType="TIMESTAMP"/>
+        <result column="supervisor_id" property="supervisorId" jdbcType="BIGINT"/>
+        <result column="type" property="type" jdbcType="INTEGER"/>
+        <result column="ip" property="ip" jdbcType="VARCHAR"/>
+        <result column="remark" property="remark" jdbcType="VARCHAR"/>
+    </resultMap>
+    <sql id="Base_Column_List">
+    id, time, supervisor_id, type, ip, remark
+  </sql>
+
+    <!--查询操作日志列表-->
+    <select id="listSupervisorEventLogPage" resultType="com.qingqingmr.qqmr.domain.bean.SupervisorEventLogVO">
+        select e.id as id,e.time as time,e.ip as ip,e.remark as
+        remark,s.name as name,s.reality_name as realityName,s.mobile as mobile
+        from t_event_supervisor e
+        INNER JOIN t_supervisor s on e.supervisor_id = s.id
+        <where>
+            <if test="id != null ">
+                and e.`id` LIKE CONCAT('%',#{id},'%')
+            </if>
+            <if test="name !=null ">
+                and s.`name` LIKE CONCAT('%',#{name},'%')
+            </if>
+            <if test="realityName !=null ">
+                and s.reality_name LIKE CONCAT('%',#{realityName},'%')
+            </if>
+            <if test="mobile !=null ">
+                and s.mobile LIKE CONCAT('%',#{mobile},'%')
+            </if>
+            <if test="timeStart !='' and timeStart != null">
+                and Date(e.time) &gt;= #{timeStart}
+            </if>
+            <if test="timeEnd !='' and timeEnd != null">
+                and Date(e.time) &lt;= #{timeEnd}
+            </if>
+        </where>
+        order by e.time DESC
+    </select>
+
+    <!--根据管理员id查询上次登录信息-->
+    <select id="getLastLoginInfo" resultMap="BaseResultMap">
+      SELECT
+          <include refid="Base_Column_List"/>
+      FROM
+          `t_event_supervisor`
+      WHERE
+      supervisor_id = #{supervisorId} AND remark=#{remark}
+      ORDER BY time DESC
+      LIMIT 1
+  </select>
+
+    <!--保存管理员事件记录-->
+    <insert id="saveEventSupervisor" parameterType="com.qingqingmr.qqmr.domain.entity.EventSupervisor" keyColumn="id"
+            keyProperty="id" useGeneratedKeys="true">
+    insert into t_event_supervisor (time, supervisor_id, type, ip, remark)
+    values (#{time}, #{supervisorId}, #{type}, #{ip}, #{remark})
+  </insert>
+
+</mapper>

@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.qingqingmr.qqmr.dao.RightRoleRightMapper" >
+  <resultMap id="BaseResultMap" type="com.qingqingmr.qqmr.domain.entity.RightRoleRight" >
+    <id column="id" property="id" jdbcType="BIGINT" />
+    <result column="time" property="time" jdbcType="TIMESTAMP" />
+    <result column="role_id" property="roleId" jdbcType="BIGINT" />
+    <result column="right_id" property="rightId" jdbcType="BIGINT" />
+  </resultMap>
+  <sql id="Base_Column_List" >
+    id, time, role_id, right_id
+  </sql>
+  
+  <!-- 通过roleid查询权限 -->
+  <select id="getRightRoleRightByRoleId" resultType="java.lang.Long">
+    select  right_id from t_right_role_right where role_id = #{roleId}
+  </select>
+  
+  <!-- 增加权限角色 -->
+  <insert id="saveRightRoleRight" parameterType="com.qingqingmr.qqmr.domain.entity.RightRoleRight" useGeneratedKeys="true" keyProperty="id" keyColumn="id">
+    insert into t_right_role_right (time, role_id, right_id)
+    values ( now(), #{roleId}, #{rightId})
+  </insert>
+  
+  <!-- 修改权限角色 -->
+  <delete id="deleteRightRoleRightByRoleId">
+    delete from t_right_role_right where right_id = #{rightId} and role_id = #{roleId}
+  </delete>
+  
+</mapper>

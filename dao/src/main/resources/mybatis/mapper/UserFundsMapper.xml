@@ -1,0 +1,90 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.qingqingmr.qqmr.dao.UserFundsMapper">
+    <resultMap id="BaseResultMap" type="com.qingqingmr.qqmr.domain.entity.UserFunds">
+        <id column="id" property="id" jdbcType="BIGINT"/>
+        <result column="time" property="time" jdbcType="TIMESTAMP"/>
+        <result column="user_id" property="userId" jdbcType="BIGINT"/>
+        <result column="balance" property="balance" jdbcType="DECIMAL"/>
+        <result column="available_balance" property="availableBalance" jdbcType="DECIMAL"/>
+        <result column="freeze" property="freeze" jdbcType="DECIMAL"/>
+        <result column="sign" property="sign" jdbcType="VARCHAR"/>
+    </resultMap>
+
+    <sql id="Base_Column_List">
+      id, time, user_id, balance, available_balance, freeze, sign
+    </sql>
+
+    <!--根据用户id查询用户资金信息-->
+    <select id="getUserFundsByUserId" resultType="com.qingqingmr.qqmr.domain.bean.UserFundsVO">
+        SELECT
+        id, time, user_id userId, balance, available_balance availableBalance, freeze, sign, balance+freeze totalAssets
+        FROM `t_user_funds` WHERE user_id = #{userId};
+    </select>
+
+    <!-- 通过id删除用户资金信息 -->
+    <delete id="deleteUserFundsById" parameterType="java.lang.Long">
+    delete from t_user_funds
+    where id = #{id}
+    </delete>
+
+    <!-- 保存用户资金信息 -->
+    <insert id="saveUserFunds" parameterType="com.qingqingmr.qqmr.domain.entity.UserFunds" keyColumn="id"
+            keyProperty="id" useGeneratedKeys="true">
+    insert into t_user_funds (id, time, user_id,
+      balance, available_balance, freeze, sign)
+    values (#{id}, #{time}, #{userId},
+      #{balance}, #{availableBalance}, #{freeze}, #{sign})
+    </insert>
+
+    <!-- 通过id更新用户资金信息 -->
+    <update id="updateUserFunds" parameterType="com.qingqingmr.qqmr.domain.entity.UserFunds">
+      update t_user_funds set balance = #{balance}, freeze = #{freeze}, available_balance = #{availableBalance}, sign = #{sign} where id = #{id}
+    </update>
+
+    <!--增加账户余额-->
+    <update id="updateAddBalance">
+      update t_user_funds set balance = balance + #{balance}  where user_id= #{userId}
+    </update>
+
+    <!--增加账户余额-->
+    <update id="updateSubBalance">
+        update t_user_funds set balance = balance - #{balance}  where user_id= #{userId} and balance >=0
+    </update>
+
+    <!--增加账户可提现余额-->
+    <update id="updateAddAvailableBalance">
+       update t_user_funds set available_balance = available_balance + #{balance} where user_id= #{userId} and balance >= available_balance
+    </update>
+
+    <!-- 增加账户余额和账户可提现余额-->
+    <update id="updateAddBalanceAndAvailableBalance">
+      update t_user_funds set balance = balance + #{balance}, available_balance = available_balance + #{balance} where user_id= #{userId}
+    </update>
+
+    <!--增加冻结金额，减少账户余额和账户可提现余额-->
+    <update id="updateAddFreezeAndSubBalanceAndAvailableBalance">
+        update t_user_funds set freeze = freeze + #{amount},balance = balance - #{amount},available_balance = available_balance - #{amount} where user_id= #{userId} and available_balance >=0
+    </update>
+
+    <!--减少冻结金额，增加账户余额和账户可提现余额-->
+    <update id="updateSubFreezeAndAddBalanceAndAvailableBalance">
+          update t_user_funds set freeze = freeze - #{amount},balance = balance + #{amount},available_balance = available_balance + #{amount} where user_id= #{userId} and freeze >=0
+    </update>
+
+    <!--增加冻结金额，减少账户余额-->
+    <update id="updateAddFreezeAndSubBalance">
+         update t_user_funds set freeze = freeze + #{amount},balance = balance - #{amount} where user_id= #{userId} and balance >=0
+    </update>
+
+    <!--减少冻结金额，增加账户余额-->
+    <update id="updateSubFreezeAndAddBalance">
+        update t_user_funds set freeze = freeze - #{amount},balance = balance + #{amount} where user_id= #{userId} and freeze >=0
+    </update>
+
+    <!--更新资金签名-->
+    <update id="updateFundsSign">
+        update t_user_funds set sign = #{sign} where user_id= #{userId}
+    </update>
+
+</mapper>

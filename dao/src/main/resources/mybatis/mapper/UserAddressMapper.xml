@@ -1,0 +1,121 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.qingqingmr.qqmr.dao.UserAddressMapper" >
+  <resultMap id="BaseResultMap" type="com.qingqingmr.qqmr.domain.entity.UserAddress" >
+    <id column="id" property="id" jdbcType="BIGINT" />
+    <result column="time" property="time" jdbcType="TIMESTAMP" />
+    <result column="user_id" property="userId" jdbcType="BIGINT" />
+    <result column="name" property="name" jdbcType="VARCHAR" />
+    <result column="mobile" property="mobile" jdbcType="CHAR" />
+    <result column="province_id" property="provinceId" jdbcType="BIGINT" />
+    <result column="city_id" property="cityId" jdbcType="BIGINT" />
+    <result column="area_id" property="areaId" jdbcType="BIGINT" />
+    <result column="detail" property="detail" jdbcType="VARCHAR" />
+    <result column="is_default" property="isDefault" jdbcType="BIT" />
+    <result column="is_del" property="isDel" jdbcType="BIT" />
+  </resultMap>
+  <sql id="Base_Column_List" >
+    id, time, user_id, name, mobile, province_id, city_id, area_id, detail, is_default, 
+    is_del
+  </sql>
+  
+  <!-- 通过id查询用户收货地址 -->
+  <select id="getUserAddressById" resultMap="BaseResultMap" parameterType="java.lang.Long" >
+    select 
+    <include refid="Base_Column_List" />
+    from t_user_address
+    where id = #{id}
+  </select>
+
+  <!--根据userId查询用户收货地址-->
+  <select id="listUserAddress" resultType="com.qingqingmr.qqmr.domain.bean.UserAddressVO">
+      SELECT
+          ua.id,
+          ua.time,
+          ua.`name`,
+          ua.mobile,
+          da.`name` provinceName,
+          dia.`name` cityName,
+          dica.`name` areaName,
+          ua.detail,
+          ua.is_default isDefault
+      FROM
+          `t_user_address` ua
+      LEFT JOIN t_dict_area da ON ua.province_id = da.id
+      LEFT JOIN t_dict_area dia ON ua.city_id = dia.id
+      LEFT JOIN t_dict_area dica ON ua.area_id = dica.id
+      WHERE
+          ua.user_id = #{userId}
+      AND ua.is_del = 0
+  </select>
+
+  <!-- 通过id删除用户收货地址 -->
+  <delete id="deleteUserAddressById" parameterType="java.lang.Long" >
+    delete from t_user_address
+    where id = #{id}
+  </delete>
+  
+  <!-- 保存用户收货地址 -->
+  <insert id="saveUserAddress" parameterType="com.qingqingmr.qqmr.domain.entity.UserAddress"  keyColumn="id" keyProperty="id" useGeneratedKeys="true">
+    insert into t_user_address (id, time, user_id, 
+      name, mobile, province_id, 
+      city_id, area_id, detail, 
+      is_default, is_del)
+    values (#{id}, #{time}, #{userId}, #{name}, #{mobile}, #{provinceId}, 
+      #{cityId}, #{areaId}, #{detail}, #{isDefault}, #{isDel})
+  </insert>
+  
+ <!-- 通过id更新用户收货地址 -->
+  <update id="updateUserAddress" parameterType="com.qingqingmr.qqmr.domain.entity.UserAddress" >
+    update t_user_address
+    set time = #{time},
+      user_id = #{userId},
+      name = #{name},
+      mobile = #{mobile},
+      province_id = #{provinceId},
+      city_id = #{cityId},
+      area_id = #{areaId},
+      detail = #{detail},
+      is_default = #{isDefault}
+    where id = #{id}
+  </update>
+  
+  <!-- 通过用户id更新是否是默认地址状态 -->
+  <update id="updateUserAddressIsDefault" parameterType="java.lang.Long" >
+    update t_user_address
+    set is_default = 0
+    where user_id = #{userId}
+  </update>
+  
+  <!-- 通过id逻辑删除用户收货地址 -->
+  <update id="deleteUserAddress" parameterType="java.lang.Long" >
+    update t_user_address
+    set is_del = 1
+    where id = #{id}
+  </update>
+  
+  <!--微信userId查询用户收货地址-->
+  <select id="listUserAddressByuserId" resultType="com.qingqingmr.qqmr.domain.bean.UserAddressDetailVO" parameterType="java.lang.Long" >
+      SELECT
+          ua.id,
+          ua.time,
+          ua.`name`,
+          ua.mobile,
+          ua.province_id provinceId,
+          da.`name` provinceName,
+          ua.city_id cityId,
+          dia.`name` cityName,
+          ua.area_id areaId,
+          dica.`name` areaName,
+          ua.detail,
+          ua.is_default as isDefault
+      FROM
+          `t_user_address` ua
+      LEFT JOIN t_dict_area da ON ua.province_id = da.id
+      LEFT JOIN t_dict_area dia ON ua.city_id = dia.id
+      LEFT JOIN t_dict_area dica ON ua.area_id = dica.id
+      WHERE
+          ua.user_id = #{userId}
+      AND ua.is_del = 0
+  </select>
+</mapper>

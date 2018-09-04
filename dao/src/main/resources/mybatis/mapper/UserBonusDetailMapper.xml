@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.qingqingmr.qqmr.dao.UserBonusDetailMapper">
+
+    <resultMap id="BaseResultMap" type="com.qingqingmr.qqmr.domain.entity.UserBonusDetail">
+        <id column="id" property="id" jdbcType="BIGINT"/>
+        <result column="time" property="time" jdbcType="TIMESTAMP"/>
+        <result column="user_id" property="userId" jdbcType="BIGINT"/>
+        <result column="relation_user_id" property="relationUserId" jdbcType="BIGINT"/>
+        <result column="relation_user_spread_id" property="relationUserSpreadId" jdbcType="BIGINT"/>
+        <result column="type" property="type" jdbcType="TINYINT"/>
+    </resultMap>
+
+    <sql id="Base_Column_List">
+        id, time, user_id, relation_user_id, relation_user_spread_id, type
+    </sql>
+
+    <!-- 通过id查询用户奖金明细 -->
+    <select id="getUserBonusDetailById" resultMap="BaseResultMap" parameterType="java.lang.Long">
+        select
+        <include refid="Base_Column_List"/>
+        from t_user_bonus_detail
+        where id = #{id}
+    </select>
+
+    <!-- 通过id删除用户奖金明细 -->
+    <delete id="deleteUserBonusDetailById" parameterType="java.lang.Long">
+    delete from t_user_bonus_detail
+    where id = #{id}
+  </delete>
+
+    <!-- 保存用户奖金明细 -->
+    <insert id="saveUserBonusDetail" parameterType="com.qingqingmr.qqmr.domain.entity.UserBonusDetail"
+            useGeneratedKeys="true" keyColumn="id" keyProperty="id">
+    insert into t_user_bonus_detail (id, time, user_id, 
+      relation_user_id,relation_user_spread_id, type)
+    values (#{id}, #{time}, #{userId}, 
+      #{relationUserId},#{relationUserSpreadId}, #{type})
+   </insert>
+
+    <!--根据用户id分组查询用户上个月某种类型的邀请情况-->
+    <select id="listAllUserLastMonthBonusDetailGroupByType" resultType="map">
+         SELECT user_id as userId, COUNT(1) AS number FROM t_user_bonus_detail WHERE type = #{type} AND PERIOD_DIFF( date_format(now(), '%Y%m'), date_format(time, '%Y%m')) = 1 GROUP BY user_id
+    </select>
+</mapper>

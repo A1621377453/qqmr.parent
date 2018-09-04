@@ -1,0 +1,94 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.qingqingmr.qqmr.dao.MembershipCardMapper" >
+  <resultMap id="BaseResultMap" type="com.qingqingmr.qqmr.domain.entity.MembershipCard" >
+    <id column="id" property="id" jdbcType="BIGINT" />
+    <result column="time" property="time" jdbcType="TIMESTAMP" />
+    <result column="user_id" property="userId" jdbcType="BIGINT" />
+    <result column="card_no" property="cardNo" jdbcType="VARCHAR" />
+    <result column="is_active" property="isActive" jdbcType="BIT" />
+    <result column="active_time" property="activeTime" jdbcType="TIMESTAMP" />
+    <result column="is_pay_for" property="isPayFor" jdbcType="BIT" />
+    <result column="expire_time" property="expireTime" jdbcType="TIMESTAMP" />
+    <result column="is_expire" property="isExpire" jdbcType="BIT" />
+    <result column="order_id" property="orderId" jdbcType="BIGINT" />
+    <result column="remark" property="remark" jdbcType="VARCHAR" />
+  </resultMap>
+  <sql id="Base_Column_List" >
+    id, time, user_id, card_no, is_active, active_time, is_pay_for, expire_time, is_expire, 
+    order_id, remark
+  </sql>
+
+  <!--通过id查询会员卡信息-->
+  <select id="getMembershipCardById" resultMap="BaseResultMap" parameterType="java.lang.Long" >
+    select 
+    <include refid="Base_Column_List" />
+    from t_membership_card
+    where id = #{id}
+  </select>
+
+  <!--通过id删除用户会员卡-->
+  <delete id="deleteMembershipCardById" parameterType="java.lang.Long" >
+    delete from t_membership_card
+    where id = #{id}
+  </delete>
+
+  <!--保存会员卡信息-->
+  <insert id="saveMembershipCard" parameterType="com.qingqingmr.qqmr.domain.entity.MembershipCard"  keyColumn="id" keyProperty="id" useGeneratedKeys="true">
+    insert into t_membership_card (id, time, user_id, 
+      card_no, is_active, active_time, 
+      is_pay_for, expire_time, is_expire, 
+      order_id, remark)
+    values (#{id}, #{time}, #{userId},
+      #{cardNo}, #{isActive}, #{activeTime},
+      #{isPayFor}, #{expireTime}, #{isExpire},
+      #{orderId}, #{remark})
+  </insert>
+
+  <!--更新会员卡信息-->
+  <update id="updateMembershipCardById" parameterType="com.qingqingmr.qqmr.domain.entity.MembershipCard" >
+    update t_membership_card
+    set time = #{time},
+      user_id = #{userId},
+      card_no = #{cardNo},
+      is_active = #{isActive},
+      active_time = #{activeTime},
+      is_pay_for = #{isPayFor},
+      expire_time = #{expireTime},
+      is_expire = #{isExpire},
+      order_id = #{orderId},
+      remark = #{remark}
+    where id = #{id}
+  </update>
+  
+  <!-- 统计门店会员卡号数量 -->
+  <select id="countMembershipCardNoPrefix" resultType="java.lang.Long">
+    select COUNT(1) from t_membership_card where card_no like CONCAT(#{cardNo},'%')
+  </select>
+  
+  <!--通过id查询会员卡信息-->
+  <select id="getMembershipCardNoInfoByUserId" resultMap="BaseResultMap" parameterType="java.lang.Long" >
+    select 
+    <include refid="Base_Column_List" />
+    from t_membership_card
+    where user_id = #{userId} limit 1
+  </select>
+  
+  <!--更新会员卡激活状态-->
+  <update id="updateMembershipCardIsActiveById" parameterType="java.lang.Long" >
+    update t_membership_card
+    set is_active = 1,
+      active_time = now(),
+      expire_time=DATE_ADD(NOW(),INTERVAL 2 YEAR)
+    where id = #{id}
+  </update>
+  
+  <!--更新第一次添加服务会员卡的状态和到期时间-->
+  <update id="updateMembershipCard" parameterType="java.lang.Long" >
+    update t_membership_card
+    set is_active = 1,
+      active_time = now(),
+      expire_time=DATE_ADD(NOW(),INTERVAL 2 YEAR)
+    where id = #{id}
+  </update>
+</mapper>

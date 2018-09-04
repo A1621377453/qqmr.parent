@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.qingqingmr.qqmr.dao.StoreMapper" >
+  <resultMap id="BaseResultMap" type="com.qingqingmr.qqmr.domain.entity.Store" >
+    <id column="id" property="id" jdbcType="BIGINT" />
+    <result column="time" property="time" jdbcType="TIMESTAMP" />
+    <result column="name" property="name" jdbcType="VARCHAR" />
+    <result column="type" property="type" jdbcType="TINYINT" />
+    <result column="area_id" property="areaId" jdbcType="BIGINT" />
+  </resultMap>
+  <sql id="Base_Column_List" >
+    id, time, name, type, area_id
+  </sql>
+  
+  <!-- 根据id查询门店 -->
+  <select id="getStoreById" resultMap="BaseResultMap" parameterType="java.lang.Long" >
+    select 
+    <include refid="Base_Column_List" />
+    from t_store where id = #{id}
+  </select>
+
+  <!--根据区域id查询门店列表-->
+  <select id="listStores" resultMap="BaseResultMap">
+    SELECT
+    <include refid="Base_Column_List"/>
+    FROM t_store WHERE area_id =#{areaId};
+  </select>
+
+  <!--根据name和区域id查询美容店信息-->
+  <select id="getStoreByNameAndAreaId" resultType="com.qingqingmr.qqmr.domain.entity.Store">
+    SELECT
+    <include refid="Base_Column_List"/>
+    FROM t_store WHERE area_id =#{areaId} and name = #{name} and type = #{type};
+  </select>
+
+  <!--  根据id删除门店 -->
+  <delete id="deleteStoreById" parameterType="java.lang.Long" >
+    delete from t_store where id = #{id}
+  </delete>
+  
+  <!-- 添加门店 -->
+  <insert id="saveStore" parameterType="com.qingqingmr.qqmr.domain.entity.Store" >
+    insert into t_store (time, name,  type, area_id) values (now(), #{name}, #{type}, #{areaId})
+  </insert>
+  
+  <!-- 修改门店 -->
+  <update id="updateStoreById" parameterType="com.qingqingmr.qqmr.domain.entity.Store" >
+    update t_store set time = now(),name = #{name},type = #{type} where id = #{id}
+  </update>
+  
+   <!-- 根据门店区域ID查询关联的门店名称 -->
+   <select id="getStoreNameByUserId" resultMap="BaseResultMap" parameterType="java.lang.Long" >
+    select 
+		<include refid="Base_Column_List" />
+	 from t_store t where t.id = 
+    (select t1.store_id from t_user_info t1 where t1.user_id= #{userId})
+  </select>
+  
+</mapper>

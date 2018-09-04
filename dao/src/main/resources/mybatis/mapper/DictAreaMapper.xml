@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.qingqingmr.qqmr.dao.DictAreaMapper" >
+
+  <!-- 查询所有的省份 -->
+  <select id="getAllProList" resultType="java.util.Map">
+    SELECT name AS name, id AS code FROM t_dict_area where parent_id= 100000
+  </select>
+
+  <!--根据省份编号查询所有城市(或者城市所属的区）-->
+  <select id="getAllCityListByProOrDict" resultType="java.util.Map">
+    SELECT name AS name, id AS code FROM t_dict_area WHERE parent_id = #{num}
+  </select>
+</mapper>

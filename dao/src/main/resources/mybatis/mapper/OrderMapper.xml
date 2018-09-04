@@ -1,0 +1,237 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.qingqingmr.qqmr.dao.OrderMapper">
+    <resultMap id="BaseResultMap" type="com.qingqingmr.qqmr.domain.entity.Order">
+        <id column="id" property="id" jdbcType="BIGINT"/>
+        <result column="time" property="time" jdbcType="TIMESTAMP"/>
+        <result column="user_id" property="userId" jdbcType="BIGINT"/>
+        <result column="order_no" property="orderNo" jdbcType="VARCHAR"/>
+        <result column="amount" property="amount" jdbcType="DECIMAL"/>
+        <result column="real_amount" property="realAmount" jdbcType="DECIMAL"/>
+        <result column="pay_time" property="payTime" jdbcType="TIMESTAMP"/>
+        <result column="status" property="status" jdbcType="TINYINT"/>
+        <result column="pay_type" property="payType" jdbcType="TINYINT"/>
+        <result column="cancel_type" property="cancelType" jdbcType="TINYINT"/>
+        <result column="cancel_time" property="cancelTime" jdbcType="TIMESTAMP"/>
+        <result column="is_pay_for" property="isPayFor" jdbcType="BIT"/>
+        <result column="pay_for_id" property="payForId" jdbcType="BIGINT"/>
+        <result column="transaction_id" property="transactionId" jdbcType="VARCHAR"/>
+        <result column="remark" property="remark" jdbcType="VARCHAR"/>
+    </resultMap>
+
+    <sql id="Base_Column_List">
+    id, time, user_id, order_no, amount, real_amount, pay_time, status, pay_type, cancel_type, 
+    cancel_time, is_pay_for, pay_for_id,transaction_id, remark
+    </sql>
+
+    <!--根据id获取订单-->
+    <select id="getOrderById" resultMap="BaseResultMap" parameterType="java.lang.Long">
+        select
+        <include refid="Base_Column_List"/>
+        from t_order
+        where id = #{id}
+    </select>
+
+    <!--根据id删除订单-->
+    <delete id="deleteOrderById" parameterType="java.lang.Long">
+    delete from t_order
+    where id = #{id}
+    </delete>
+
+    <!--添加订单-->
+    <insert id="saveOrder" parameterType="com.qingqingmr.qqmr.domain.entity.Order" keyColumn="id" keyProperty="id"
+            useGeneratedKeys="true">
+    insert into t_order (id, time, user_id, 
+      order_no, amount, real_amount, 
+      pay_time, status, pay_type, 
+      cancel_type, cancel_time, is_pay_for, 
+      pay_for_id, remark)
+    values (#{id}, #{time}, #{userId},
+      #{orderNo}, #{amount}, #{realAmount},
+      #{payTime}, #{status}, #{payType},
+      #{cancelType}, #{cancelTime}, #{isPayFor},
+      #{payForId}, #{remark})
+    </insert>
+
+    <!--根据用户id查询所有订单列表（生成时间倒序）-->
+    <select id="listOrders" parameterType="java.util.Map" resultType="com.qingqingmr.qqmr.domain.bean.OrderDetailVO">
+    SELECT
+        tor.id,
+		tg. `name`as goodsName,
+		tg.image as image,
+		tor.time as time,
+		tor.amount,
+		tor. `status`
+	FROM
+		t_order tor
+		LEFT JOIN t_order_goods tog on tog.order_id=tor.id
+		LEFT JOIN t_goods tg ON tg.id=tog.goods_id
+    WHERE user_id =#{userId}
+    ORDER BY time DESC
+    </select>
+
+    <!--取消订单-->
+    <update id="updateOrderCancelInfo">
+    update t_order
+     set status = -1 , cancel_type = #{cancelType} , cancel_time = #{cancelTime}
+    where id = #{id}
+  </update>
+
+    <!--根据指定时间和订单状态去查询订单集合 -->
+    <select id="listOrderByTime" resultMap="BaseResultMap">
+        SELECT
+        <include refid="Base_Column_List"/>
+        FROM `t_order`
+        WHERE `status` = 1 AND NOW() >= DATE_ADD(time,INTERVAL 30 MINUTE)
+    </select>
+
+    <!-- 微信小程序：查询支付成功的订单总数 -->
+    <select id="getOrderPaySuccessCount" resultType="java.lang.Integer">
+		SELECT
+			count(1)
+		FROM t_order
+		WHERE status = 2
+	</select>
+
+    <!--通过订单代付id查询已经交易成功的订单编号-->
+    <select id="getOrderCodeByUserId" resultMap="BaseResultMap">
+        SELECT
+        <include refid="Base_Column_List"/>
+        FROM t_order
+        WHERE user_id =#{userId}
+        AND status = 2
+    </select>
+
+    <!--后台根据搜索条件获取平台所有订单列表-->
+    <select id="listPlatformOrder" resultType="com.qingqingmr.qqmr.domain.bean.OrderVO">
+        SELECT
+        o.id,
+        o.order_no orderNo,
+        u.nick_name nickName,
+        CASE
+        WHEN u.role_type > 2 THEN (SELECT e.reality_name FROM t_employee e WHERE e.id=(SELECT u.employee_id FROM t_user
+        u WHERE u.id=o.user_id))
+        ELSE '--'
+        END as realityName,
+        u.mobile,
+        g.`name` goodsName,
+        o.amount,
+        DATE_FORMAT(o.time, '%Y-%m-%d %T') time,
+        o.pay_type payType,
+        CASE o.pay_type
+        WHEN 1 THEN '微信支付'
+        END as payTypeStr,
+        DATE_FORMAT(o.pay_time, '%Y-%m-%d %T') payTime,
+        o.is_pay_for isPayFor,
+        case o.`status`
+        when 1 then '待付款'
+        when 2 then '交易成功'
+        when -1 then '交易关闭'
+        end as status
+        FROM
+        `t_order` o
+        LEFT JOIN t_user u ON u.id=o.user_id
+        LEFT JOIN t_order_goods og ON og.order_id=o.id
+        LEFT JOIN t_goods g ON g.id=og.goods_id
+        LEFT JOIN t_employee e ON e.id=u.employee_id
+        <where>
+            <if test="type!=null and type!=''">
+                <if test="typeStr!=null and typeStr!='' and type==1">
+                    and o.order_no LIKE CONCAT('%',#{typeStr},'%')
+                </if>
+                <if test="typeStr!=null and typeStr!='' and type==2">
+                    and u.nick_name = #{typeStr}
+                </if>
+                <if test="typeStr!=null and typeStr!='' and type==3">
+                    and e.reality_name LIKE CONCAT('%',#{typeStr},'%')
+                </if>
+                <if test="typeStr!=null and typeStr!='' and type==4">
+                    and u.mobile LIKE CONCAT('%',#{typeStr},'%')
+                </if>
+            </if>
+            <if test="orderStatus!=null and orderStatus!=''and orderStatus!=0">
+                and o.`status` = #{orderStatus}
+            </if>
+            <if test="timeBegin !='' and timeBegin != null">
+                and Date(o.time) &gt;= #{timeBegin}
+            </if>
+            <if test="timeEnd !='' and timeEnd != null">
+                and Date(o.time) &lt;= #{timeEnd}
+            </if>
+        </where>
+        ORDER BY o.time desc
+    </select>
+
+    <!--根据订单id获取订单详情信息-->
+    <select id="getOrderDetailByOrderId" resultType="com.qingqingmr.qqmr.domain.bean.OrderDetailVO">
+            SELECT
+            o.id,
+            o.order_no orderNo,
+            o.`status`,
+            DATE_FORMAT(o.time, '%Y-%m-%d %T') time,
+            o.cancel_time cancelTime,
+            o.pay_type payType,
+            CASE o.pay_type
+            WHEN 1 THEN '微信支付'
+            END as payTypeStr,
+            DATE_FORMAT(o.pay_time, '%Y-%m-%d %T') payTime,
+            o.real_amount realAmount,
+            u.nick_name nickName,
+            CASE
+            WHEN u.role_type > 2 THEN (SELECT e.reality_name FROM t_employee e WHERE e.id=o.user_id)
+            ELSE '--'
+            END as realityName,
+            u.mobile,
+            opf.`name` payForNickName,
+            IFNULL(opf.mobile,"--") payForMobile,
+            g.image,
+            g.`name` goodsName,
+            og.number,
+            og.goods_price goodsPrice,
+            o.amount,
+            o.is_pay_for isPayFor
+            FROM
+                            `t_order` o
+            LEFT JOIN t_user u ON u.id=o.user_id
+            LEFT JOIN t_order_pay_for opf ON opf.id=o.pay_for_id
+            LEFT JOIN t_user u1 ON u1.id=o.pay_for_id
+            LEFT JOIN t_order_goods og ON og.order_id=o.id
+            LEFT JOIN t_goods g ON g.id=og.goods_id
+            WHERE
+                o.id=#{id}
+    </select>
+
+    <!--根据id获取订单-->
+    <select id="getOrderByOrderNo" resultMap="BaseResultMap">
+        select
+        <include refid="Base_Column_List"/>
+        from t_order
+        where order_no = #{orderNo}
+    </select>
+
+    <!--更新订单的状态和支付时间-->
+    <update id="updateOrderPaySuccessInfo">
+	  update t_order
+	   set status = 2 , pay_time = #{payTime}, real_amount = #{realAmount}
+	  where id = #{id}
+	</update>
+
+    <!--通过用户id获取用户未完成的订单记录-->
+    <select id="countUserNotFinishOrderByUserId" resultType="java.lang.Integer" parameterType="java.lang.Long">
+	    select 
+	    	count(1)
+	    from t_order
+	    where user_id = #{userId} and status = 1
+	</select>
+
+    <!--通过用户id被代付的未完成的订单记录-->
+    <select id="countUserBePaidByUserId" resultType="java.lang.Integer" parameterType="java.lang.Long">
+        SELECT COUNT(1) FROM t_order a LEFT JOIN t_order_pay_for b ON a.pay_for_id = b.id LEFT JOIN t_user c ON c.mobile = b.mobile
+        WHERE a.is_pay_for = TRUE AND c.id =  #{userId} AND a.`status` = 1
+    </select>
+
+    <!--支付成功更新第三方订单号-->
+    <update id="updateTransactionId">
+        update t_order set transaction_id = #{transactionId} where id = #{id} and status = 2
+    </update>
+</mapper>

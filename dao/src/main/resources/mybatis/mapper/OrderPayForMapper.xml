@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.qingqingmr.qqmr.dao.OrderPayForMapper" >
+  <resultMap id="BaseResultMap" type="com.qingqingmr.qqmr.domain.entity.OrderPayFor" >
+    <id column="id" property="id" jdbcType="BIGINT" />
+    <result column="time" property="time" jdbcType="TIMESTAMP" />
+    <result column="name" property="name" jdbcType="VARCHAR" />
+    <result column="mobile" property="mobile" jdbcType="VARCHAR" />
+    <result column="card_no" property="cardNo" jdbcType="VARCHAR" />
+    <result column="pay_user_id" property="payUserId" jdbcType="BIGINT" />
+    <result column="status" property="status" jdbcType="TINYINT" />
+  </resultMap>
+  <sql id="Base_Column_List" >
+    id, time, name, mobile, card_no, pay_user_id, status
+  </sql>
+
+  <!--根据id查询订单代付信息-->
+  <select id="getOrderPayForById" resultMap="BaseResultMap" parameterType="java.lang.Long" >
+    select 
+    <include refid="Base_Column_List" />
+    from t_order_pay_for
+    where id = #{id}
+  </select>
+
+  <!--根据id删除订单代付信息-->
+  <delete id="deleteOrderPayForById" parameterType="java.lang.Long" >
+    delete from t_order_pay_for
+    where id = #{id}
+  </delete>
+
+  <!--添加订单代付信息-->
+  <insert id="saveOrderPayFor" parameterType="com.qingqingmr.qqmr.domain.entity.OrderPayFor"  keyColumn="id" keyProperty="id" useGeneratedKeys="true">
+    insert into t_order_pay_for (id, time, name, 
+      mobile, card_no, pay_user_id, 
+      status)
+    values (#{id}, #{time}, #{name},
+      #{mobile}, #{cardNo}, #{payUserId},
+      #{status})
+  </insert>
+
+  <!--更新订单代付信息-->
+  <update id="updateOrderPayForById" parameterType="com.qingqingmr.qqmr.domain.entity.OrderPayFor" >
+    update t_order_pay_for
+    set time = #{time},
+      name = #{name},
+      mobile = #{mobile},
+      card_no = #{cardNo},
+      pay_user_id = #{payUserId},
+      status = #{status}
+    where id = #{id}
+  </update>
+  
+  <!--通过手机号码查询订单代付信息-->
+  <select id="listOrderPayForByMobile" resultMap="BaseResultMap" parameterType="java.lang.String" >
+    select 
+    <include refid="Base_Column_List" />
+    from t_order_pay_for
+    where mobile = #{mobile}
+  </select>
+
+   <!--更改卡号-->
+  <update id="updateOrderPayForCardNo">
+    update t_order_pay_for set card_no = #{cardNo},status = 1 where id = #{id}
+  </update>
+</mapper>

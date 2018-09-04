@@ -1,0 +1,157 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.qingqingmr.qqmr.dao.WithdrawalUserMapper">
+    <resultMap id="BaseResultMap" type="com.qingqingmr.qqmr.domain.entity.WithdrawalUser">
+        <id column="id" property="id" jdbcType="BIGINT"/>
+        <result column="time" property="time" jdbcType="TIMESTAMP"/>
+        <result column="user_id" property="userId" jdbcType="BIGINT"/>
+        <result column="amount" property="amount" jdbcType="DECIMAL"/>
+        <result column="fee" property="fee" jdbcType="DECIMAL"/>
+        <result column="available_balance" property="availableBalance" jdbcType="DECIMAL"/>
+        <result column="service_order_no" property="serviceOrderNo" jdbcType="VARCHAR"/>
+        <result column="type" property="type" jdbcType="TINYINT"/>
+        <result column="status" property="status" jdbcType="TINYINT"/>
+        <result column="audit_time" property="auditTime" jdbcType="TIMESTAMP"/>
+        <result column="audit_supervisor_id" property="auditSupervisorId" jdbcType="BIGINT"/>
+        <result column="audit_opinion" property="auditOpinion" jdbcType="VARCHAR"/>
+        <result column="complete_time" property="completeTime" jdbcType="TIMESTAMP"/>
+        <result column="complete_info" property="completeInfo" jdbcType="VARCHAR"/>
+        <result column="remark" property="remark" jdbcType="VARCHAR"/>
+    </resultMap>
+    <sql id="Base_Column_List">
+    id, time, user_id, amount, fee, available_balance, service_order_no, type, status, 
+    audit_time, audit_supervisor_id, audit_opinion, complete_time, complete_info, remark
+  </sql>
+
+    <!-- 通过id查询用户提现信息 -->
+    <select id="getWithdrawalUserById" resultMap="BaseResultMap" parameterType="java.lang.Long">
+        select
+        <include refid="Base_Column_List"/>
+        from t_withdrawal_user
+        where id = #{id}
+    </select>
+
+    <!--查询提现列表-->
+    <select id="listWithdrawalUser" resultType="com.qingqingmr.qqmr.domain.bean.WithdrawUserVO">
+        select t1.id,t1.service_order_no as serviceOrderNo,t1.status,t1.amount,t1.available_balance as
+        availableBalance,t1.time,t1.user_id as userId,t1.type,t2.nick_name as nickName,t2.mobile as
+        mobile,t3.reality_name as realityName from t_withdrawal_user t1
+        LEFT JOIN t_user t2
+        on t1.user_id = t2.id
+        LEFT JOIN t_employee t3
+        on t2.employee_id = t3.id
+        <where>
+            <if test="serviceOrderNo != '' and serviceOrderNo != null">
+                and t1.service_order_no LIKE CONCAT('%',#{serviceOrderNo},'%')
+            </if>
+            <if test="status != null and status != 0 ">
+                and t1.status = #{status}
+            </if>
+            <if test="nickName !='' and nickName != null ">
+                and t2.nick_name LIKE CONCAT('%',#{nickName},'%')
+            </if>
+            <if test="realityName !='' and realityName != null ">
+                and t3.reality_name LIKE CONCAT('%',#{realityName},'%')
+            </if>
+            <if test="mobile !='' and  mobile !=null ">
+                and t2.mobile LIKE CONCAT('%',#{mobile},'%')
+            </if>
+            <if test="timeStart !='' and timeStart != null">
+                and Date(t1.time) &gt;= #{timeStart}
+            </if>
+            <if test="timeEnd !='' and timeEnd != null">
+                and Date(t1.time) &lt;= #{timeEnd}
+            </if>
+        </where>
+        order by t1.time DESC
+    </select>
+
+    <!--后台提现列表详情-->
+    <select id="getWithdrawUserVOById" resultType="com.qingqingmr.qqmr.domain.bean.WithdrawUserVO">
+     select t1.id,t1.service_order_no as serviceOrderNo,t1.status,t1.amount,t1.available_balance as availableBalance,t1.time,t1.user_id as userId,t1.type,t1.audit_opinion as auditOpinion,t1.audit_time as auditTime,t1.remark,t2.nick_name as nickName,t2.mobile as mobile,t3.reality_name as realityName,t4.name from t_withdrawal_user t1
+    LEFT JOIN t_user t2 on t1.user_id = t2.id
+    LEFT JOIN t_employee t3 on t2.employee_id = t3.id
+    LEFT JOIN t_supervisor t4 on t1.audit_supervisor_id = t4.id
+    where t1.id = #{id}
+  </select>
+
+    <!-- 保存用户提现信息 -->
+    <insert id="saveWithdrawalUser" parameterType="com.qingqingmr.qqmr.domain.entity.WithdrawalUser" keyColumn="id"
+            keyProperty="id" useGeneratedKeys="true">
+    insert into t_withdrawal_user (id, time, user_id, 
+      amount, fee, available_balance, 
+      service_order_no, type, status, 
+      audit_time, audit_supervisor_id, audit_opinion, 
+      complete_time, complete_info, remark
+      )
+    values (#{id}, #{time}, #{userId}, 
+      #{amount}, #{fee}, #{availableBalance}, 
+      #{serviceOrderNo}, #{type}, #{status}, 
+      #{auditTime}, #{auditSupervisorId}, #{auditOpinion}, 
+      #{completeTime}, #{completeInfo}, #{remark}
+      )
+  </insert>
+
+    <!-- 通过id审核用户提现信息 -->
+    <update id="updateWithdrawalUserById" parameterType="com.qingqingmr.qqmr.domain.entity.WithdrawalUser">
+    update t_withdrawal_user
+    set
+      audit_time = now(),
+      status = #{status},
+      audit_supervisor_id = #{auditSupervisorId},
+      audit_opinion = #{auditOpinion},
+      remark = #{remark}
+    where id = #{id}
+  </update>
+
+    <!--更新提现结果-->
+    <update id="updateWithdrawResultById">
+    update t_withdrawal_user
+    set status = #{status},
+    complete_info = #{completeInfo},
+    complete_time = now()
+    where id = #{id}
+    </update>
+
+    <!-- 微信小程序：分页查询提现记录 -->
+    <select id="listWithdrawalUserPage" resultMap="BaseResultMap" parameterType="java.lang.Long">
+        select
+        <include refid="Base_Column_List"/>
+        from t_withdrawal_user
+        where user_id = #{userId}
+    </select>
+
+    <!--获取平台提现总额-->
+    <select id="getWithdrawalAmount" resultType="java.lang.Double">
+        SELECT SUM(amount)
+        FROM `t_withdrawal_user`
+        <where>
+            status =#{withdrawStatus}
+            <if test="timeBegin !=null and timeBegin !=''">
+                and Date(time) &gt;= #{timeBegin}
+            </if>
+            <if test="timeEnd !=null and timeEnd != ''">
+                and Date(time) &lt;= #{timeEnd}
+            </if>
+        </where>
+    </select>
+
+    <!--根据提现状态获取当天提现人数和金额-->
+    <select id="getDayWithdrawal" resultType="java.util.Map">
+      SELECT COUNT(id) count,IFNULL(SUM(amount),0) amount FROM `t_withdrawal_user` WHERE `status`=#{withdrawStatus} AND to_days(time) = to_days(now());
+  </select>
+
+    <!--根据orderNo查询订单-->
+    <select id="getWithdrawUserByOrderNo" resultMap="BaseResultMap">
+        select
+        <include refid="Base_Column_List"/>
+        from t_withdrawal_user
+        where service_order_no = #{serviceOrderNo}
+    </select>
+    
+    <!--查询当前用户当天已申请提现总额 -->
+    <select id="getWithdrawTotalByUserId" resultType="java.lang.Double"  parameterType="java.lang.Long">
+    	select SUM(amount) as sumAmount from t_withdrawal_user where status BETWEEN 1 and 3 
+    	and DATE_FORMAT(time,'%Y-%m-%d') = DATE_FORMAT(NOW(),'%Y-%m-%d') and user_id = #{userId}
+    </select>
+</mapper>

@@ -1,0 +1,376 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.qingqingmr.qqmr.dao.EmployeeMapper">
+    <resultMap id="BaseResultMap" type="com.qingqingmr.qqmr.domain.entity.Employee">
+        <id column="id" property="id" jdbcType="BIGINT"/>
+        <result column="time" property="time" jdbcType="TIMESTAMP"/>
+        <result column="sno" property="sno" jdbcType="VARCHAR"/>
+        <result column="mobile" property="mobile" jdbcType="CHAR"/>
+        <result column="reality_name" property="realityName" jdbcType="VARCHAR"/>
+        <result column="id_number" property="idNumber" jdbcType="VARCHAR"/>
+        <result column="photo" property="photo" jdbcType="VARCHAR"/>
+        <result column="sex" property="sex" jdbcType="TINYINT"/>
+        <result column="email" property="email" jdbcType="VARCHAR"/>
+        <result column="qq" property="qq" jdbcType="VARCHAR"/>
+        <result column="birth_date" property="birthDate" jdbcType="DATE"/>
+        <result column="entry_date" property="entryDate" jdbcType="DATE"/>
+        <result column="address" property="address" jdbcType="VARCHAR"/>
+        <result column="remark" property="remark" jdbcType="VARCHAR"/>
+        <result column="store_id" property="storeId" jdbcType="BIGINT"/>
+        <result column="role_type" property="roleType" jdbcType="TINYINT"/>
+        <result column="parent_id" property="parentId" jdbcType="BIGINT"/>
+    </resultMap>
+
+    <resultMap id="LinkedResultMap" type="com.qingqingmr.qqmr.domain.bean.EmployeeVO" extends="BaseResultMap">
+        <result column="belongCounselor" property="belongCounselor" jdbcType="VARCHAR"/>
+        <result column="storeName" property="storeName" jdbcType="VARCHAR"/>
+    </resultMap>
+    <sql id="Base_Column_List">
+        id, time, sno, mobile, reality_name, id_number, photo, sex, email, qq, birth_date,
+        entry_date, address, remark, store_id, role_type, parent_id
+    </sql>
+    <sql id="Linked_Column_List">
+        e.id, e.time, e.sno, e.mobile, e.reality_name, e.id_number, e.photo, e.sex, e.email, e.qq, e.birth_date,
+        e.entry_date, e.address, e.remark, e.store_id, e.role_type, e.parent_id, em.reality_name as belongCounselor
+    </sql>
+
+    <!--通过id查询员工-->
+    <select id="getEmployeeById" resultMap="LinkedResultMap" parameterType="java.lang.Long">
+        SELECT
+            e.*,
+            s.`name`  storeName,
+            sa.`name` areaName
+        FROM
+            `t_employee` e
+            LEFT JOIN t_store s ON s.id = e.store_id
+            LEFT JOIN t_store_area sa ON sa.id = s.area_id
+        WHERE
+            e.id = #{id}
+    </select>
+
+    <!--根据搜索条件查询顾问列表-->
+    <select id="listEmployees" parameterType="com.qingqingmr.qqmr.base.bo.EmployeeSearchBO" resultMap="LinkedResultMap">
+        select
+        <include refid="Linked_Column_List"/>
+        from t_employee e
+        LEFT JOIN t_employee em ON e.parent_id=em.id
+        <where>
+            <if test="roleType!=null and roleType!=''">
+                e.role_type = #{roleType}
+            </if>
+            <if test="type!=null and type!=''">
+                <if test="typeStr!=null and typeStr!='' and type==1">
+                    and e.sno LIKE CONCAT('%',#{typeStr},'%')
+                </if>
+                <if test="typeStr!=null and typeStr!='' and type==2">
+                    and e.reality_name LIKE CONCAT('%',#{typeStr},'%')
+                </if>
+                <if test="typeStr!=null and typeStr!='' and type==3">
+                    and e.mobile LIKE CONCAT('%',#{typeStr},'%')
+                </if>
+                <if test="typeStr!=null and typeStr!='' and type==4">
+                    and e.id_number LIKE CONCAT('%',#{typeStr},'%')
+                </if>
+                <if test="typeStr!=null and typeStr!='' and type==5">
+                    and e.qq LIKE CONCAT('%',#{typeStr},'%')
+                </if>
+                <if test="typeStr!=null and typeStr!='' and type==6">
+                    and em.reality_name LIKE CONCAT('%',#{typeStr},'%')
+                </if>
+            </if>
+
+            <if test="sex!=null and sex!='' and sex!=0">
+                and e.sex = #{sex}
+            </if>
+            <if test="birthDateBegin !='' and birthDateBegin != null">
+                and Date(e.birth_date) &gt;= #{birthDateBegin}
+            </if>
+            <if test="birthDateEnd !='' and birthDateEnd != null">
+                and Date(e.birth_date) &lt;= #{birthDateEnd}
+            </if>
+            <if test="entryDateBegin !='' and entryDateBegin != null">
+                and Date(e.entry_date) &gt;= #{entryDateBegin}
+            </if>
+            <if test="entryDateEnd !='' and entryDateEnd != null">
+                and Date(e.entry_date) &lt;= #{entryDateEnd}
+            </if>
+            <if test="creatTimeBegin !='' and creatTimeBegin != null">
+                and Date(e.time) &gt;= #{creatTimeBegin}
+            </if>
+            <if test="creatTimeEnd !='' and creatTimeEnd != null">
+                and Date(e.time) &lt;= #{creatTimeEnd}
+            </if>
+        </where>
+        order by e.time desc
+    </select>
+
+    <!--获取最大员工编号-->
+    <select id="getMaxEmployeeSno" resultType="java.lang.String">
+        SELECT MAX(sno)
+        FROM `t_employee`
+        WHERE store_id = #{storeId};
+    </select>
+
+    <!--根据员工编号获取员工信息-->
+    <select id="getEmployeeBySno" resultMap="BaseResultMap">
+        SELECT
+        <include refid="Base_Column_List"/>
+        FROM `t_employee` WHERE sno = #{sno};
+    </select>
+
+    <!--根据员工编号获取员工数量-->
+    <select id="countEmployeeBySno" resultType="java.lang.Integer">
+        SELECT COUNT(sno)
+        FROM `t_employee`
+        WHERE sno = #{sno};
+    </select>
+
+    <!--根据身份证号获取员工数量-->
+    <select id="countEmployeeByidNumber" resultType="java.lang.Integer">
+        SELECT COUNT(id)
+        FROM `t_employee`
+        WHERE id_number = #{idNumber};
+    </select>
+
+    <!--根据门店id获取该门店顾问列表-->
+    <select id="getCounselorsOfStore" resultMap="BaseResultMap">
+        SELECT
+        <include refid="Base_Column_List"/>
+        FROM `t_employee` WHERE store_id = #{storeId} and role_type=2
+    </select>
+
+    <!--获取用户当月佣金列表信息-->
+    <select id="listUserCurMonBonus" resultType="java.util.Map">
+        SELECT
+            ub.time,
+            IF(u.employee_id = -1, "--", e.reality_name) as inviterRealName,
+            IF(u.employee_id = -1, u.mobile, e.mobile)   as inviterMobile,
+            u1.nick_name                                    inviteeName,
+            u1.mobile                                       inviteeMobile,
+            ub.type,
+            CASE ub.type
+            WHEN 1
+                THEN "直推奖"
+            WHEN 2
+                THEN "合作奖"
+            WHEN 3
+                THEN "一级奖"
+            WHEN 4
+                THEN "二级奖"
+            WHEN 5
+                THEN "人头奖"
+            WHEN 6
+                THEN "双人奖"
+            END                                          as typeStr,
+            ub.amount
+        FROM
+            t_user_bonus ub
+            LEFT JOIN t_user_bonus_detail ubd ON ub.relation_id = ubd.id
+
+            LEFT JOIN t_user u ON ubd.relation_user_spread_id = u.id
+            LEFT JOIN t_user u1 ON ubd.relation_user_id = u1.id
+            LEFT JOIN t_employee e ON e.id = u.employee_id
+        WHERE
+            ub.user_id = #{userId}
+            AND date_format(ub.time, '%Y-%m') = date_format(now(), '%Y-%m')
+        ORDER BY
+            ub.time DESC
+    </select>
+
+    <!--获取美容师所属顾问信息-->
+    <select id="getCounselorOfBeautician" resultType="com.qingqingmr.qqmr.domain.bean.EmployeeVO">
+        SELECT
+            em.id,
+            em.reality_name realityName,
+            em.mobile,
+            em.photo,
+            em.sex,
+            CASE em.role_type
+            WHEN 1
+                THEN '美容师'
+            WHEN 2
+                THEN '顾问'
+            END as          roleTypeStr
+        FROM
+            `t_employee` e
+            LEFT JOIN t_employee em ON em.id = e.parent_id
+        WHERE
+            e.id = #{id}
+    </select>
+
+    <!--根据userId查询员工信息-->
+    <select id="getEmployeeByUserId" resultType="com.qingqingmr.qqmr.domain.bean.EmployeeVO">
+        SELECT
+            u.id,
+            e.reality_name realityName,
+            e.photo,
+            e.mobile,
+            e.sex,
+            case e.sex
+            when "0"
+                then "未知"
+            when "1"
+                then "男"
+            when "2"
+                then "女"
+            end as         sexStr,
+            e.role_type,
+            case e.role_type
+            when "1"
+                then "美容师"
+            when "2"
+                then "顾问"
+            end as         roleTypeStr
+        FROM
+            `t_employee` e
+            LEFT JOIN t_user u ON u.employee_id = e.id
+        WHERE
+            u.id = #{userId}
+    </select>
+
+    <!--根据门店id获取门店员工-->
+    <select id="listEmployeeByStoreId" resultType="java.util.Map">
+        SELECT
+        u.id,
+        IFNULL(e.photo,'') photo,
+        IFNULL(e.reality_name,'') name,
+        e.mobile,e.sex
+        FROM
+        `t_employee` e
+        LEFT JOIN t_user u ON u.employee_id=e.id
+        <where>
+            e.store_id=#{storeId} AND e.role_type =#{type}
+            <if test="key!=null and key!=''">
+                and (e.reality_name LIKE CONCAT("%",#{key},"%") or e.mobile LIKE CONCAT("%",#{key},"%"))
+            </if>
+        </where>
+    </select>
+
+    <!--根据手机号查询员工信息-->
+    <select id="getEmployeeByMobile" resultMap="BaseResultMap">
+        SELECT
+        <include refid="Base_Column_List"/>
+        FROM `t_employee` WHERE mobile=#{mobile};
+    </select>
+
+    <!--通过id查询员工基本信息-->
+    <select id="getEmployeeBaseInfoById" resultType="com.qingqingmr.qqmr.domain.entity.Employee">
+        SELECT
+            <include refid="Base_Column_List"/>
+        FROM
+            `t_employee` e
+        WHERE
+            e.id = #{id}
+    </select>
+
+    <!--通过id删除员工-->
+    <delete id="deleteEmployeeById" parameterType="java.lang.Long">
+        delete from t_employee
+        where id = #{id}
+    </delete>
+
+    <!--保存员工-->
+    <insert id="saveEmployee" parameterType="com.qingqingmr.qqmr.domain.entity.Employee">
+        <selectKey resultType="java.lang.Long" order="AFTER" keyProperty="id">
+            SELECT LAST_INSERT_ID()
+        </selectKey>
+        insert into t_employee (id, time, sno,
+        mobile, reality_name, id_number,
+        photo, sex, email,
+        qq, birth_date, entry_date,
+        address, remark, store_id,
+        role_type, parent_id)
+        values (#{id}, #{time}, #{sno},
+        #{mobile}, #{realityName}, #{idNumber},
+        #{photo}, #{sex}, #{email},
+        #{qq}, #{birthDate}, #{entryDate},
+        #{address}, #{remark}, #{storeId},
+        #{roleType}, #{parentId})
+    </insert>
+
+    <!--更新员工-->
+    <update id="updateEmployeeById" parameterType="com.qingqingmr.qqmr.domain.entity.Employee">
+        update t_employee
+        set time         = #{time},
+            sno          = #{sno},
+            mobile       = #{mobile},
+            reality_name = #{realityName},
+            id_number    = #{idNumber},
+            photo        = #{photo},
+            sex          = #{sex},
+            email        = #{email},
+            qq           = #{qq},
+            birth_date   = #{birthDate},
+            entry_date   = #{entryDate},
+            address      = #{address},
+            remark       = #{remark},
+            store_id     = #{storeId},
+            role_type    = #{roleType},
+            parent_id    = #{parentId}
+        where id = #{id}
+    </update>
+
+    <!--选择性的根据id更新员工信息-->
+    <update id="updateEmployeeByIdSelective" parameterType="com.qingqingmr.qqmr.domain.entity.Employee">
+        update t_employee
+        <set>
+            <if test="time != null">
+                time = #{time},
+            </if>
+            <if test="sno != null">
+                sno = #{sno},
+            </if>
+            <if test="mobile != null">
+                mobile = #{mobile},
+            </if>
+            <if test="realityName != null">
+                reality_name = #{realityName},
+            </if>
+            <if test="idNumber != null">
+                id_number = #{idNumber},
+            </if>
+            <if test="photo != null">
+                photo = #{photo},
+            </if>
+            <if test="sex != null">
+                sex = #{sex},
+            </if>
+            <if test="email != null">
+                email = #{email},
+            </if>
+            <if test="qq != null">
+                qq = #{qq},
+            </if>
+            <if test="birthDate != null">
+                birth_date = #{birthDate},
+            </if>
+            <if test="entryDate != null">
+                entry_date = #{entryDate},
+            </if>
+            <if test="address != null">
+                address = #{address},
+            </if>
+            <if test="remark != null">
+                remark = #{remark},
+            </if>
+            <if test="storeId != null">
+                store_id = #{storeId},
+            </if>
+            <if test="roleType != null">
+                role_type = #{roleType},
+            </if>
+            <if test="parentId != null">
+                parent_id = #{parentId},
+            </if>
+        </set>
+        where id = #{id}
+    </update>
+
+    <!--微信小程序：修改员工手机号-->
+    <update id="updateEmployeeMobile" parameterType="com.qingqingmr.qqmr.domain.entity.Employee">
+        update t_employee
+        set time   = #{time},
+            mobile = #{mobile}
+        where id = #{id}
+    </update>
+</mapper>
